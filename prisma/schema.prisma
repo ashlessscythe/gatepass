@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Gatepass {
+  id                String    @id @default(cuid())
+  formNumber       String?   // No.
+  dateIn           DateTime
+  timeIn           DateTime
+  dateOut          DateTime?
+  timeOut          DateTime?
+  carrier          String
+  truckLicenseNo   String    // License No. Truck
+  truckNo          String    // Truck No.
+  trailerLicenseNo String?   // License No. Trailer
+  trailerNo        String?   // Trailer No.
+  operatorName     String    // Name of Operator
+  passengerName    String?   // Name of Passenger
+  purpose          Purpose
+  sealed           Boolean
+  sealNo1          String?   // Seal No. 1
+  sealNo2          String?   // Seal No. 2
+  remarks          String?   // Remarks
+  securityOfficer  String    // Security Officer
+  
+  // Release Pass Details
+  releaseRemarks   String?   // Release Pass Remarks
+  trailerType      String?   // Trailer Type
+  releaseTrailerNo String?   // Trailer No. (Release)
+  destination      String?   // Destination
+  vehicleInspected Boolean   // Vehicle Inspected
+  releaseSealNo    String?   // Seal No. (Release)
+  vestReturned     Boolean   // Vest Returned
+  
+  // Signatures (stored as base64 strings)
+  receiverSignature    String?   // Receiver's signature
+  shipperSignature     String?   // Shipper's signature
+  securitySignature    String?   // Security Officer's signature for release
+  
+  // Metadata
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  status           Status    @default(PENDING)
+  
+  @@index([formNumber])
+  @@index([dateIn])
+  @@index([carrier])
+}
+
+enum Purpose {
+  PICKUP
+  SERVICE
+  DELIVER
+  OTHER
+}
+
+enum Status {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// User model for authentication and authorization
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  role          Role
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum Role {
+  GUARD
+  DISPATCH
+  WAREHOUSE
+  ADMIN
+}
