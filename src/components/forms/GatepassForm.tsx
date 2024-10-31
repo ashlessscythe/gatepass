@@ -8,6 +8,8 @@ import { FormField } from "./FormField";
 import { FormSelect } from "./FormSelect";
 import { FormCheckbox } from "./FormCheckbox";
 import { Toast } from "@/components/ui/toast";
+import { GatepassPreview } from "@/components/gatepass/GatepassPreview";
+import { GatepassData } from "@/types/gatepass";
 import {
   GatepassFormValues,
   gatepassFormSchema,
@@ -24,6 +26,8 @@ const purposeOptions = [
 export function GatepassForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState(false);
+  const [previewData, setPreviewData] = useState<GatepassData | null>(null);
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
@@ -35,6 +39,12 @@ export function GatepassForm() {
   });
 
   const onSubmit = async (data: GatepassFormValues) => {
+    if (preview) {
+      setPreview(false);
+      setPreviewData(null);
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await fetch("/api/gatepass", {
@@ -69,16 +79,93 @@ export function GatepassForm() {
     }
   };
 
+  const handlePreview = async () => {
+    const isValid = await methods.trigger();
+    if (isValid) {
+      const formData = methods.getValues();
+      const data: GatepassData = {
+        id: "preview",
+        formNumber: null,
+        dateIn: formData.dateIn,
+        timeIn: formData.timeIn,
+        dateOut: null,
+        timeOut: null,
+        carrier: formData.carrier,
+        truckLicenseNo: formData.truckLicenseNo,
+        truckNo: formData.truckNo,
+        trailerLicenseNo: formData.trailerLicenseNo || null,
+        trailerNo: formData.trailerNo || null,
+        operatorName: formData.operatorName,
+        passengerName: formData.passengerName || null,
+        purpose: formData.purpose,
+        sealed: formData.sealed,
+        sealNo1: formData.sealNo1 || null,
+        sealNo2: formData.sealNo2 || null,
+        remarks: formData.remarks || null,
+        securityOfficer: formData.securityOfficer,
+        releaseRemarks: formData.releaseRemarks || null,
+        trailerType: formData.trailerType || null,
+        releaseTrailerNo: formData.releaseTrailerNo || null,
+        destination: formData.destination || null,
+        vehicleInspected: formData.vehicleInspected,
+        releaseSealNo: formData.releaseSealNo || null,
+        vestReturned: formData.vestReturned,
+        status: "PENDING",
+        createdBy: null,
+        updatedBy: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setPreviewData(data);
+      setPreview(true);
+    }
+  };
+
+  if (preview && previewData) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Preview Gate Pass</h2>
+          <button
+            onClick={() => {
+              setPreview(false);
+              setPreviewData(null);
+            }}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Back to Edit
+          </button>
+        </div>
+        <GatepassPreview data={previewData} />
+        <div className="flex justify-end space-x-4">
+          <button
+            onClick={() => {
+              setPreview(false);
+              setPreviewData(null);
+            }}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Edit
+          </button>
+          <button
+            onClick={methods.handleSubmit(onSubmit)}
+            className="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-primary/90"
+          >
+            Confirm & Submit
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Form fields remain the same */}
           {/* Basic Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Basic Information</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField name="formNumber" label="Form Number" />
               <FormField name="dateIn" label="Date In" type="date" required />
               <FormField name="timeIn" label="Time In" type="time" required />
             </div>
@@ -223,6 +310,14 @@ export function GatepassForm() {
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
             >
               Reset
+            </button>
+            <button
+              type="button"
+              onClick={handlePreview}
+              disabled={loading}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+            >
+              Preview
             </button>
             <button
               type="submit"

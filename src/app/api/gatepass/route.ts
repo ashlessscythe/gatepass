@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { generateGatepassNumber } from "@/lib/utils";
 import { gatepassFormSchema } from "@/lib/schemas/gatepass";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
@@ -18,8 +21,25 @@ export async function POST(req: Request) {
     // Convert date and time strings to DateTime
     const dateIn = new Date(body.dateIn + "T" + body.timeIn);
 
+    // Generate a unique gatepass number
+    let formNumber = generateGatepassNumber();
+    let isUnique = false;
+
+    // Ensure the generated number is unique
+    while (!isUnique) {
+      const existing = await prisma.gatepass.findFirst({
+        where: { formNumber },
+      });
+      if (!existing) {
+        isUnique = true;
+      } else {
+        formNumber = generateGatepassNumber();
+      }
+    }
+
     const gatepass = await prisma.gatepass.create({
       data: {
+        formNumber,
         dateIn,
         timeIn: dateIn,
         carrier: body.carrier,
