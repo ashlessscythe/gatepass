@@ -3,59 +3,48 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Role } from "@prisma/client";
-
-interface NavItem {
-  href: string;
-  label: string;
-  roles: Role[];
-}
-
-const navItems: NavItem[] = [
-  {
-    href: "/dashboard",
-    label: "Dashboard",
-    roles: ["ADMIN", "GUARD", "DISPATCH", "WAREHOUSE"],
-  },
-  {
-    href: "/gatepass",
-    label: "Gate Pass",
-    roles: ["ADMIN", "GUARD", "DISPATCH"],
-  },
-  {
-    href: "/admin",
-    label: "Admin",
-    roles: ["ADMIN"],
-  },
-];
 
 export function Navigation() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const userRole = session?.user?.role as Role;
 
-  const filteredNavItems = navItems.filter((item) =>
-    item.roles.includes(userRole)
-  );
+  if (!session) return null;
+
+  const isActive = (path: string) => pathname === path;
+
+  const links = [
+    {
+      href: "/dashboard",
+      label: "Dashboard",
+      show: true,
+    },
+    {
+      href: "/guard",
+      label: "Guard Dashboard",
+      show: session.user.role === "GUARD",
+    },
+    {
+      href: "/gatepass",
+      label: "New Gatepass",
+      show: true,
+    },
+  ];
 
   return (
-    <nav className="flex space-x-4">
-      {filteredNavItems.map((item) => {
-        const isActive = pathname === item.href;
-        return (
+    <nav className="flex items-center space-x-6 text-sm font-medium">
+      {links
+        .filter((link) => link.show)
+        .map((link) => (
           <Link
-            key={item.href}
-            href={item.href}
-            className={`${
-              isActive
-                ? "text-blue-600 font-semibold"
-                : "text-gray-600 hover:text-gray-900"
-            } transition-colors`}
+            key={link.href}
+            href={link.href}
+            className={`transition-colors hover:text-foreground/80 ${
+              isActive(link.href) ? "text-foreground" : "text-foreground/60"
+            }`}
           >
-            {item.label}
+            {link.label}
           </Link>
-        );
-      })}
+        ))}
     </nav>
   );
 }

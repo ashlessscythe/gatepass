@@ -4,6 +4,7 @@ import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { MobileNav } from "./MobileNav";
+import { Navigation } from "./Navigation";
 
 export function Header() {
   const { data: session } = useSession();
@@ -19,20 +20,9 @@ export function Header() {
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          <Link
-            href="/dashboard"
-            className="transition-colors hover:text-foreground/80 text-foreground/60"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/gatepass"
-            className="transition-colors hover:text-foreground/80 text-foreground/60"
-          >
-            New Gatepass
-          </Link>
-        </nav>
+        <div className="hidden md:flex items-center">
+          <Navigation />
+        </div>
 
         {/* Desktop User Menu */}
         <div className="hidden md:flex items-center space-x-4">

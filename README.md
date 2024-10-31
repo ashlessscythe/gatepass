@@ -4,16 +4,28 @@ A modern web application for digitizing truck gate management processes. Replace
 
 ## Features
 
+### Core Features
+
 - Role-based authentication (Guard, Dispatch, Warehouse, Admin)
 - Digital Gatepass form with validation
 - Real-time form preview
 - List view with search and filtering
 - 6-digit alphanumeric gatepass numbers
 - Digital signature capture and storage
+
+### User Interface
+
 - Dark mode support with theme persistence
 - Fully responsive design for mobile devices
-- Secure data storage
+- Mobile-friendly navigation
 - Role-specific dashboards
+
+### Guard Interface
+
+- Quick entry form for arriving trucks
+- Recent entries list for reference
+- Clear workflow instructions
+- Initial driver and truck information capture
 
 ## Tech Stack
 
@@ -82,12 +94,38 @@ src/
 │   ├── auth/        # Authentication components
 │   ├── forms/       # Form components
 │   ├── gatepass/    # Gatepass-specific components
+│   ├── guard/       # Guard interface components
 │   ├── layout/      # Layout components
 │   ├── theme/       # Theme components
 │   └── ui/          # UI components
 ├── lib/             # Utility functions and configurations
 └── types/           # TypeScript type definitions
 ```
+
+## Workflow
+
+1. **Guard Entry**
+
+   - Guard enters initial driver and truck details
+   - Creates new gatepass for arriving truck
+   - Directs driver to dispatch
+
+2. **Dispatch Verification** (Coming Soon)
+
+   - Verifies information against BOL paperwork
+   - Checks truck into yard management system
+   - Assigns pickup door for live loads
+
+3. **Warehouse Processing** (Coming Soon)
+
+   - Handles document processing
+   - Manages seal assignments
+   - Captures driver signatures
+
+4. **Exit Verification** (Coming Soon)
+   - Guard performs final checks
+   - Verifies seals and requirements
+   - Completes truck exit process
 
 ## Development Status
 
@@ -97,7 +135,10 @@ src/
 - [x] Digital signatures
 - [x] Theme support and dark mode
 - [x] Mobile responsiveness
-- [ ] Workflow implementation
+- [x] Guard interface
+- [ ] Dispatch interface
+- [ ] Warehouse interface
+- [ ] Exit verification
 - [ ] Export and print features
 - [ ] Security & optimization
 - [ ] Testing & documentation

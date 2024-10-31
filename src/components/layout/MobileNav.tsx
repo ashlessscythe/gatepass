@@ -10,6 +10,24 @@ export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
   const { data: session } = useSession();
 
+  const links = [
+    {
+      href: "/dashboard",
+      label: "Dashboard",
+      show: true,
+    },
+    {
+      href: "/guard",
+      label: "Guard Dashboard",
+      show: session?.user.role === "GUARD",
+    },
+    {
+      href: "/gatepass",
+      label: "New Gatepass",
+      show: true,
+    },
+  ];
+
   return (
     <div className="md:hidden">
       <button
@@ -24,20 +42,18 @@ export function MobileNav() {
         <div className="absolute top-14 left-0 right-0 bg-background border-b border-border">
           <div className="p-4 space-y-4">
             <nav className="space-y-4">
-              <Link
-                href="/dashboard"
-                className="block text-foreground/60 hover:text-foreground"
-                onClick={() => setIsOpen(false)}
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/gatepass"
-                className="block text-foreground/60 hover:text-foreground"
-                onClick={() => setIsOpen(false)}
-              >
-                New Gatepass
-              </Link>
+              {links
+                .filter((link) => link.show)
+                .map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="block text-foreground/60 hover:text-foreground"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
             </nav>
             <div className="pt-4 border-t border-border space-y-4">
               <div className="flex items-center justify-between">
