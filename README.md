@@ -9,15 +9,18 @@ A modern web application for digitizing truck gate management processes. Replace
 - Real-time form preview
 - List view with search and filtering
 - 6-digit alphanumeric gatepass numbers
+- Digital signature capture and storage
+- Dark mode support with theme persistence
 - Secure data storage
 - Role-specific dashboards
 
 ## Tech Stack
 
 - **Frontend:** Next.js 14 with TypeScript
-- **UI Components:** Tailwind CSS
+- **UI Components:** Tailwind CSS with theme support
 - **Database:** Neon Postgres with Prisma ORM
 - **Authentication:** NextAuth.js with role-based access
+- **Signature Capture:** SignaturePad integration
 
 ## Getting Started
 
@@ -78,6 +81,7 @@ src/
 │   ├── forms/       # Form components
 │   ├── gatepass/    # Gatepass-specific components
 │   ├── layout/      # Layout components
+│   ├── theme/       # Theme components
 │   └── ui/          # UI components
 ├── lib/             # Utility functions and configurations
 └── types/           # TypeScript type definitions
@@ -88,7 +92,9 @@ src/
 - [x] Initial project setup
 - [x] Authentication system
 - [x] Core form implementation
-- [ ] Digital signatures
+- [x] Digital signatures
+- [x] Theme support and dark mode
+- [ ] Mobile responsiveness
 - [ ] Workflow implementation
 - [ ] Export and print features
 - [ ] Security & optimization

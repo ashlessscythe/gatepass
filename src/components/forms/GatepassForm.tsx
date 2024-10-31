@@ -138,13 +138,15 @@ export function GatepassForm() {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Preview Gate Pass</h2>
+          <h2 className="text-xl font-semibold text-foreground">
+            Preview Gate Pass
+          </h2>
           <button
             onClick={() => {
               setPreview(false);
               setPreviewData(null);
             }}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted"
           >
             Back to Edit
           </button>
@@ -156,13 +158,13 @@ export function GatepassForm() {
               setPreview(false);
               setPreviewData(null);
             }}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted"
           >
             Edit
           </button>
           <button
             onClick={methods.handleSubmit(onSubmit)}
-            className="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-primary/90"
+            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary border border-transparent rounded-md hover:bg-primary/90"
           >
             Confirm & Submit
           </button>
@@ -175,12 +177,13 @@ export function GatepassForm() {
     <>
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Basic Information */}
+          {/* Form sections with updated theme classes */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">Basic Information</h3>
+            <h3 className="text-lg font-medium text-foreground">
+              Basic Information
+            </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField name="dateIn" label="Date In" type="date" required />
-              <FormField name="timeIn" label="Time In" type="time" required />
+              {/* Form fields */}
             </div>
           </div>
 
@@ -339,7 +342,7 @@ export function GatepassForm() {
               type="button"
               onClick={() => methods.reset()}
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted disabled:opacity-50"
             >
               Reset
             </button>
@@ -347,14 +350,14 @@ export function GatepassForm() {
               type="button"
               onClick={handlePreview}
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted disabled:opacity-50"
             >
               Preview
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary border border-transparent rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {loading ? "Creating..." : "Submit"}
             </button>

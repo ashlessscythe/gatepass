@@ -16,7 +16,7 @@ function PreviewSection({
 }) {
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">{title}</h3>
+      <h3 className="text-lg font-medium text-foreground">{title}</h3>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>
     </div>
   );
@@ -31,8 +31,8 @@ function PreviewField({
 }) {
   return (
     <div className="space-y-1">
-      <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p className="text-sm text-gray-900">
+      <p className="text-sm font-medium text-muted-foreground">{label}</p>
+      <p className="text-sm text-foreground">
         {typeof value === "boolean" ? (value ? "Yes" : "No") : value || "-"}
       </p>
     </div>
@@ -48,9 +48,9 @@ function SignaturePreview({
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-gray-500">{label}</p>
+      <p className="text-sm font-medium text-muted-foreground">{label}</p>
       {signature ? (
-        <div className="border rounded-md p-2 bg-white">
+        <div className="border rounded-md p-2 bg-card">
           <div className="relative h-[100px]">
             <Image
               src={signature}
@@ -62,7 +62,7 @@ function SignaturePreview({
           </div>
         </div>
       ) : (
-        <p className="text-sm text-gray-400 italic">No signature</p>
+        <p className="text-sm italic text-muted-foreground">No signature</p>
       )}
     </div>
   );
@@ -85,17 +85,16 @@ function formatTime(timeStr: string) {
 
 export function GatepassPreview({ data }: GatepassPreviewProps) {
   return (
-    <div className="space-y-8 bg-white p-6 rounded-lg border">
-      {/* Rest of the component remains the same */}
+    <div className="space-y-8 bg-card p-6 rounded-lg border">
       <div className="flex justify-between items-start">
         <div>
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-xl font-semibold text-foreground">
             Gate Pass{" "}
-            <span className="text-blue-600">
+            <span className="text-primary">
               #{data.formNumber || "PREVIEW"}
             </span>
           </h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Created by {data.createdBy?.name || "Unknown"} on{" "}
             {formatDate(data.createdAt)}
           </p>
@@ -104,12 +103,12 @@ export function GatepassPreview({ data }: GatepassPreviewProps) {
           className={`px-2 py-1 text-xs font-semibold rounded-full
           ${
             data.status === "COMPLETED"
-              ? "bg-green-100 text-green-800"
+              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
               : data.status === "IN_PROGRESS"
-              ? "bg-yellow-100 text-yellow-800"
+              ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100"
               : data.status === "CANCELLED"
-              ? "bg-red-100 text-red-800"
-              : "bg-gray-100 text-gray-800"
+              ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+              : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
           }`}
         >
           {data.status.toLowerCase()}
@@ -168,7 +167,7 @@ export function GatepassPreview({ data }: GatepassPreviewProps) {
       </PreviewSection>
 
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">Signatures</h3>
+        <h3 className="text-lg font-medium text-foreground">Signatures</h3>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           <SignaturePreview
             label="Receiver's Signature"
@@ -185,11 +184,11 @@ export function GatepassPreview({ data }: GatepassPreviewProps) {
         </div>
       </div>
 
-      <div className="border-t pt-6">
+      <div className="border-t border-border pt-6">
         <div className="flex justify-end space-x-4">
           <button
             onClick={() => window.print()}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
             Print
           </button>

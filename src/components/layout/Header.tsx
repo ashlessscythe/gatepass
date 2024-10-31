@@ -1,45 +1,60 @@
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
-import { Navigation } from "./Navigation";
+import Link from "next/link";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export function Header() {
   const { data: session } = useSession();
 
   return (
-    <header className="border-b border-gray-200 bg-white">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <span className="text-xl font-bold">GatePass</span>
-            </div>
-            <div className="hidden md:block ml-10">
-              <Navigation />
-            </div>
-          </div>
-
-          <div className="flex items-center">
-            {session?.user && (
-              <div className="flex items-center space-x-4">
-                <div className="text-sm">
-                  <span className="text-gray-500">Signed in as </span>
-                  <span className="font-medium text-gray-900">
-                    {session.user.name}
-                  </span>
-                  <span className="ml-2 text-xs text-gray-500">
-                    ({session.user.role.toLowerCase()})
-                  </span>
-                </div>
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 max-w-screen-2xl items-center">
+        <div className="mr-4 flex">
+          <Link className="mr-6 flex items-center space-x-2" href="/">
+            <span className="hidden font-bold sm:inline-block">
+              Gatepass System
+            </span>
+          </Link>
+          <nav className="flex items-center space-x-6 text-sm font-medium">
+            <Link
+              href="/dashboard"
+              className="transition-colors hover:text-foreground/80 text-foreground/60"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/gatepass"
+              className="transition-colors hover:text-foreground/80 text-foreground/60"
+            >
+              New Gatepass
+            </Link>
+          </nav>
+        </div>
+        <div className="flex flex-1 items-center justify-end space-x-4">
+          <nav className="flex items-center space-x-4">
+            <ThemeToggle />
+            {session ? (
+              <>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {session.user?.name}
+                </span>
                 <button
-                  onClick={() => signOut({ callbackUrl: "/login" })}
-                  className="text-sm text-red-600 hover:text-red-800"
+                  onClick={() => signOut()}
+                  className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                 >
                   Sign out
                 </button>
-              </div>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              >
+                Sign in
+              </Link>
             )}
-          </div>
+          </nav>
         </div>
       </div>
     </header>

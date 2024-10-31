@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { GeistSans } from "geist/font";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/SessionProvider";
-
-const inter = Inter({ subsets: ["latin"] });
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Gatepass",
-  description: "Digital gatepass management system",
+  title: "Gatepass System",
+  description: "A modern web application for managing truck gate passes",
 };
 
 export default function RootLayout({
@@ -16,9 +15,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <SessionProvider>{children}</SessionProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${GeistSans.className} min-h-screen bg-background font-sans antialiased`}
+      >
+        <SessionProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );

@@ -16,6 +16,15 @@ GATEPASS WEB APP TODO LIST
         [x] Implement login functionality
         [x] Add role-based middleware
     [x] Create basic layout and navigation
+    [x] Add theme selection and dark mode
+        [x] Implement theme toggle in header
+        [x] Make components theme-aware
+        [x] Add theme persistence
+    [ ] Implement responsive design
+        [ ] Make layout mobile-friendly
+        [ ] Optimize tables for small screens
+        [ ] Improve form layout on mobile
+        [ ] Add mobile navigation
     [x] DEPLOYMENT 1: Verify basic app structure and auth
 
 [x] Phase 2: Core Form Implementation
