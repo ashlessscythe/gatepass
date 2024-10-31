@@ -1,13 +1,13 @@
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { SessionProvider } from "@/components/providers/SessionProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = {
-  title: "Gatepass - Truck Management System",
-  description:
-    "Digital truck gate management system for efficient logistics operations",
+export const metadata: Metadata = {
+  title: "Gatepass",
+  description: "Digital gatepass management system",
 };
 
 export default function RootLayout({
@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <MainLayout>{children}</MainLayout>
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );

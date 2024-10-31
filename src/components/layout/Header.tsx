@@ -1,28 +1,46 @@
-import Link from "next/link";
+"use client";
+
+import { signOut, useSession } from "next-auth/react";
+import { Navigation } from "./Navigation";
 
 export function Header() {
+  const { data: session } = useSession();
+
   return (
-    <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-screen-2xl items-center px-4">
-        <div className="mr-6 flex">
-          <Link href="/" className="mr-8 flex items-center space-x-2">
-            <span className="text-lg font-bold">Gatepass</span>
-          </Link>
+    <header className="border-b border-gray-200 bg-white">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <span className="text-xl font-bold">GatePass</span>
+            </div>
+            <div className="hidden md:block ml-10">
+              <Navigation />
+            </div>
+          </div>
+
+          <div className="flex items-center">
+            {session?.user && (
+              <div className="flex items-center space-x-4">
+                <div className="text-sm">
+                  <span className="text-gray-500">Signed in as </span>
+                  <span className="font-medium text-gray-900">
+                    {session.user.name}
+                  </span>
+                  <span className="ml-2 text-xs text-gray-500">
+                    ({session.user.role.toLowerCase()})
+                  </span>
+                </div>
+                <button
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="text-sm text-red-600 hover:text-red-800"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-        <nav className="flex items-center space-x-8 text-sm font-medium">
-          <Link
-            href="/dashboard"
-            className="transition-colors hover:text-foreground/80 text-foreground/60"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/gatepass"
-            className="transition-colors hover:text-foreground/80 text-foreground/60"
-          >
-            New Gatepass
-          </Link>
-        </nav>
       </div>
     </header>
   );

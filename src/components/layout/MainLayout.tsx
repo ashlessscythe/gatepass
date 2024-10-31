@@ -6,10 +6,10 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="relative flex min-h-screen flex-col">
+    <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="flex-1">
-        <div className="container max-w-screen-2xl py-6">{children}</div>
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        {children}
       </main>
     </div>
   );
