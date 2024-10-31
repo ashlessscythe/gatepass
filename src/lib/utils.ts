@@ -13,3 +13,45 @@ export function generateGatepassNumber(): string {
   }
   return result;
 }
+
+export function formatDate(dateStr: string) {
+  // Ensure we're working with UTC time
+  const date = new Date(dateStr);
+  const utcDate = new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      date.getUTCHours(),
+      date.getUTCMinutes()
+    )
+  );
+
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(utcDate);
+}
+
+export function formatTime(timeStr: string) {
+  // Ensure we're working with UTC time
+  const date = new Date(timeStr);
+  const utcDate = new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      date.getUTCHours(),
+      date.getUTCMinutes()
+    )
+  );
+
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC",
+  }).format(utcDate);
+}

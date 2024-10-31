@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { GatepassData } from "@/types/gatepass";
+import { formatDate, formatTime } from "@/lib/utils";
 
 interface GatepassPreviewProps {
   data: GatepassData;
@@ -17,7 +18,7 @@ function PreviewSection({
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium text-foreground">{title}</h3>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{children}</div>
     </div>
   );
 }
@@ -32,7 +33,7 @@ function PreviewField({
   return (
     <div className="space-y-1">
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <p className="text-sm text-foreground">
+      <p className="text-sm text-foreground break-words">
         {typeof value === "boolean" ? (value ? "Yes" : "No") : value || "-"}
       </p>
     </div>
@@ -68,25 +69,10 @@ function SignaturePreview({
   );
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-function formatTime(timeStr: string) {
-  return new Date(timeStr).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 export function GatepassPreview({ data }: GatepassPreviewProps) {
   return (
-    <div className="space-y-8 bg-card p-6 rounded-lg border">
-      <div className="flex justify-between items-start">
+    <div className="space-y-8 bg-card p-4 sm:p-6 rounded-lg border">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
           <h2 className="text-xl font-semibold text-foreground">
             Gate Pass{" "}
@@ -94,13 +80,13 @@ export function GatepassPreview({ data }: GatepassPreviewProps) {
               #{data.formNumber || "PREVIEW"}
             </span>
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mt-1">
             Created by {data.createdBy?.name || "Unknown"} on{" "}
             {formatDate(data.createdAt)}
           </p>
         </div>
         <span
-          className={`px-2 py-1 text-xs font-semibold rounded-full
+          className={`px-2 py-1 text-xs font-semibold rounded-full self-start sm:self-center whitespace-nowrap
           ${
             data.status === "COMPLETED"
               ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
@@ -148,7 +134,7 @@ export function GatepassPreview({ data }: GatepassPreviewProps) {
         <PreviewField label="Sealed" value={data.sealed} />
         <PreviewField label="Seal No. 1" value={data.sealNo1} />
         <PreviewField label="Seal No. 2" value={data.sealNo2} />
-        <div className="col-span-2">
+        <div className="lg:col-span-2">
           <PreviewField label="Remarks" value={data.remarks} />
         </div>
       </PreviewSection>
@@ -168,7 +154,7 @@ export function GatepassPreview({ data }: GatepassPreviewProps) {
 
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-foreground">Signatures</h3>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <SignaturePreview
             label="Receiver's Signature"
             signature={data.receiverSignature}
@@ -188,7 +174,7 @@ export function GatepassPreview({ data }: GatepassPreviewProps) {
         <div className="flex justify-end space-x-4">
           <button
             onClick={() => window.print()}
-            className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
             Print
           </button>

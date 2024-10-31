@@ -11,6 +11,7 @@ A modern web application for digitizing truck gate management processes. Replace
 - 6-digit alphanumeric gatepass numbers
 - Digital signature capture and storage
 - Dark mode support with theme persistence
+- Fully responsive design for mobile devices
 - Secure data storage
 - Role-specific dashboards
 
@@ -21,6 +22,7 @@ A modern web application for digitizing truck gate management processes. Replace
 - **Database:** Neon Postgres with Prisma ORM
 - **Authentication:** NextAuth.js with role-based access
 - **Signature Capture:** SignaturePad integration
+- **Mobile Support:** Responsive design with mobile-first approach
 
 ## Getting Started
 
@@ -94,7 +96,7 @@ src/
 - [x] Core form implementation
 - [x] Digital signatures
 - [x] Theme support and dark mode
-- [ ] Mobile responsiveness
+- [x] Mobile responsiveness
 - [ ] Workflow implementation
 - [ ] Export and print features
 - [ ] Security & optimization
