@@ -1,6 +1,11 @@
 "use client";
 
-import { GatepassPreviewProps } from "@/types/gatepass";
+import Image from "next/image";
+import { GatepassData } from "@/types/gatepass";
+
+interface GatepassPreviewProps {
+  data: GatepassData;
+}
 
 function PreviewSection({
   title,
@@ -34,9 +39,54 @@ function PreviewField({
   );
 }
 
+function SignaturePreview({
+  label,
+  signature,
+}: {
+  label: string;
+  signature: string | null;
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium text-gray-500">{label}</p>
+      {signature ? (
+        <div className="border rounded-md p-2 bg-white">
+          <div className="relative h-[100px]">
+            <Image
+              src={signature}
+              alt={`${label} signature`}
+              fill
+              className="object-contain"
+              unoptimized // Since this is a data URL
+            />
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-gray-400 italic">No signature</p>
+      )}
+    </div>
+  );
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function formatTime(timeStr: string) {
+  return new Date(timeStr).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function GatepassPreview({ data }: GatepassPreviewProps) {
   return (
     <div className="space-y-8 bg-white p-6 rounded-lg border">
+      {/* Rest of the component remains the same */}
       <div className="flex justify-between items-start">
         <div>
           <h2 className="text-xl font-semibold">
@@ -47,7 +97,7 @@ export function GatepassPreview({ data }: GatepassPreviewProps) {
           </h2>
           <p className="text-sm text-gray-500">
             Created by {data.createdBy?.name || "Unknown"} on{" "}
-            {new Date(data.createdAt).toLocaleString()}
+            {formatDate(data.createdAt)}
           </p>
         </div>
         <span
@@ -67,25 +117,13 @@ export function GatepassPreview({ data }: GatepassPreviewProps) {
       </div>
 
       <PreviewSection title="Basic Information">
-        <PreviewField
-          label="Date In"
-          value={new Date(data.dateIn).toLocaleDateString()}
-        />
-        <PreviewField
-          label="Time In"
-          value={new Date(data.timeIn).toLocaleTimeString()}
-        />
+        <PreviewField label="Date In" value={formatDate(data.dateIn)} />
+        <PreviewField label="Time In" value={formatTime(data.timeIn)} />
         {data.dateOut && (
-          <PreviewField
-            label="Date Out"
-            value={new Date(data.dateOut).toLocaleDateString()}
-          />
+          <PreviewField label="Date Out" value={formatDate(data.dateOut)} />
         )}
         {data.timeOut && (
-          <PreviewField
-            label="Time Out"
-            value={new Date(data.timeOut).toLocaleTimeString()}
-          />
+          <PreviewField label="Time Out" value={formatTime(data.timeOut)} />
         )}
       </PreviewSection>
 
@@ -128,6 +166,24 @@ export function GatepassPreview({ data }: GatepassPreviewProps) {
         <PreviewField label="Vehicle Inspected" value={data.vehicleInspected} />
         <PreviewField label="Vest Returned" value={data.vestReturned} />
       </PreviewSection>
+
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Signatures</h3>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <SignaturePreview
+            label="Receiver's Signature"
+            signature={data.receiverSignature}
+          />
+          <SignaturePreview
+            label="Shipper's Signature"
+            signature={data.shipperSignature}
+          />
+          <SignaturePreview
+            label="Security Officer's Signature"
+            signature={data.securitySignature}
+          />
+        </div>
+      </div>
 
       <div className="border-t pt-6">
         <div className="flex justify-end space-x-4">

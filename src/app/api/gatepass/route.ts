@@ -16,6 +16,7 @@ export async function POST(req: Request) {
     }
 
     const json = await req.json();
+    console.log("Received payload:", json); // Debug log
     const body = gatepassFormSchema.parse(json);
 
     // Convert date and time strings to DateTime
@@ -62,6 +63,9 @@ export async function POST(req: Request) {
         vehicleInspected: body.vehicleInspected,
         releaseSealNo: body.releaseSealNo,
         vestReturned: body.vestReturned,
+        receiverSignature: body.receiverSignature,
+        shipperSignature: body.shipperSignature,
+        securitySignature: body.securitySignature,
         createdBy: {
           connect: {
             id: session.user.id,

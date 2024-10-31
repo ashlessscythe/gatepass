@@ -27,6 +27,9 @@ export interface GatepassData {
   vehicleInspected: boolean;
   releaseSealNo: string | null;
   vestReturned: boolean;
+  receiverSignature: string | null;
+  shipperSignature: string | null;
+  securitySignature: string | null;
   status: Status;
   createdBy: { name: string } | null;
   updatedBy: { name: string } | null;

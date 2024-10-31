@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormField } from "./FormField";
 import { FormSelect } from "./FormSelect";
 import { FormCheckbox } from "./FormCheckbox";
+import { FormSignature } from "./FormSignature";
 import { Toast } from "@/components/ui/toast";
 import { GatepassPreview } from "@/components/gatepass/GatepassPreview";
 import { GatepassData } from "@/types/gatepass";
@@ -47,12 +48,21 @@ export function GatepassForm() {
 
     try {
       setLoading(true);
+
+      // Include all form data including signatures
+      const payload = {
+        ...data,
+        receiverSignature: data.receiverSignature || null,
+        shipperSignature: data.shipperSignature || null,
+        securitySignature: data.securitySignature || null,
+      };
+
       const response = await fetch("/api/gatepass", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -110,6 +120,9 @@ export function GatepassForm() {
         vehicleInspected: formData.vehicleInspected,
         releaseSealNo: formData.releaseSealNo || null,
         vestReturned: formData.vestReturned,
+        receiverSignature: formData.receiverSignature || null,
+        shipperSignature: formData.shipperSignature || null,
+        securitySignature: formData.securitySignature || null,
         status: "PENDING",
         createdBy: null,
         updatedBy: null,
@@ -299,6 +312,25 @@ export function GatepassForm() {
                 />
                 <FormCheckbox name="vestReturned" label="Vest Returned" />
               </div>
+            </div>
+          </div>
+
+          {/* Signatures */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Signatures</h3>
+            <div className="grid grid-cols-1 gap-8">
+              <FormSignature
+                name="receiverSignature"
+                label="Receiver's Signature"
+              />
+              <FormSignature
+                name="shipperSignature"
+                label="Shipper's Signature"
+              />
+              <FormSignature
+                name="securitySignature"
+                label="Security Officer's Signature"
+              />
             </div>
           </div>
 

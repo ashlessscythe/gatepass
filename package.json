@@ -16,12 +16,17 @@
     "@auth/prisma-adapter": "^1.0.9",
     "@hookform/resolvers": "^3.3.2",
     "@prisma/client": "^5.6.0",
+    "@types/signature_pad": "^2.3.6",
     "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.1",
     "next": "14.0.3",
     "next-auth": "^4.24.5",
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.48.2",
+    "signature_pad": "^5.0.4",
+    "tailwind-merge": "^2.5.4",
+    "tailwindcss-animate": "^1.0.7",
     "zod": "^3.22.4"
   },
   "devDependencies": {

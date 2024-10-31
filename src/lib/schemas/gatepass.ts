@@ -35,6 +35,11 @@ export const gatepassFormSchema = z.object({
   vehicleInspected: z.boolean(),
   releaseSealNo: z.string().optional(),
   vestReturned: z.boolean(),
+
+  // Signatures
+  receiverSignature: z.string().nullable(),
+  shipperSignature: z.string().nullable(),
+  securitySignature: z.string().nullable(),
 });
 
 export type GatepassFormValues = z.infer<typeof gatepassFormSchema>;
@@ -46,4 +51,7 @@ export const defaultValues: Partial<GatepassFormValues> = {
   purpose: "PICKUP",
   dateIn: new Date().toISOString().split("T")[0],
   timeIn: new Date().toTimeString().split(" ")[0].slice(0, 5),
+  receiverSignature: null,
+  shipperSignature: null,
+  securitySignature: null,
 };
