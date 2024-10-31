@@ -15,15 +15,16 @@ GATEPASS WEB APP TODO LIST
         [x] Create user model with roles
         [x] Implement login functionality
         [x] Add role-based middleware
-    [ ] Create basic layout and navigation
+    [x] Create basic layout and navigation
     [ ] DEPLOYMENT 1: Verify basic app structure and auth
 
 [ ] Phase 2: Core Form Implementation
     [x] Design and implement database schema
-    [ ] Create Gatepass form components
-    [ ] Implement form validation
-    [ ] Add form state management
+    [x] Create Gatepass form components
+    [x] Implement form validation
+    [x] Add form state management
     [ ] Create form preview mode
+    [ ] Add list view for gatepasses
     [ ] DEPLOYMENT 2: Verify form functionality
 
 [ ] Phase 3: Digital Signatures
