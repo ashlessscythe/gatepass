@@ -56,14 +56,14 @@ export function LoginForm() {
       <div>
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-foreground"
         >
           Email
         </label>
         <input
           {...form.register("email")}
           type="email"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border-input bg-background text-foreground shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           placeholder="name@example.com"
         />
         {form.formState.errors.email && (
@@ -75,14 +75,14 @@ export function LoginForm() {
       <div>
         <label
           htmlFor="password"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-foreground"
         >
           Password
         </label>
         <input
           {...form.register("password")}
           type="password"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border-input bg-background text-foreground shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           placeholder="Enter your password"
         />
         {form.formState.errors.password && (
