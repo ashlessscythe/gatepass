@@ -1,67 +1,92 @@
-# Gatepass Web Application
+# Gatepass Web App
 
-A modern web application for digitizing truck gate management processes. Replaces paper-based systems with a streamlined digital workflow for managing truck entry, dispatch verification, and exit procedures.
+A digital solution for managing truck gate passes, replacing the traditional paper-based system.
 
 ## Features
 
-- Digital Gatepass form processing
-- Role-based access control (Guard, Dispatch, Warehouse, Driver)
-- Digital signature capture
-- Real-time workflow tracking
-- Document printing and export (PDF/CSV)
-- Secure data storage and audit trails
+- Role-based authentication system
+- Digital form processing
+- Signature capture and verification
+- Workflow management
+- Export and print capabilities
 
 ## Tech Stack
 
-- **Frontend:** Next.js with ShadcN UI components
-- **Backend:** Prisma ORM
-- **Database:** Neon Postgres
-- **Authentication:** Role-based access control
+- **Frontend**: Next.js 14 with TypeScript
+- **UI Components**: Tailwind CSS
+- **Database**: Neon Postgres with Prisma ORM
+- **Authentication**: NextAuth.js
 
-## System Requirements
+## Getting Started
 
-- Node.js (Latest LTS version)
-- PostgreSQL database (Neon)
-- Modern web browser with touch support for signatures
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables:
+   ```env
+   DATABASE_URL=your_postgres_url
+   NEXTAUTH_SECRET=your_secret
+   NEXTAUTH_URL=http://localhost:3000
+   ```
+4. Run database migrations:
+   ```bash
+   npx prisma migrate dev
+   ```
+5. Seed the database with test users:
+   ```bash
+   npx prisma db seed
+   ```
+6. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-## Development Setup
+## Test Users
 
-1. Install dependencies:
+The following test accounts are available after seeding:
 
-```bash
-npm install
-```
+- **Admin**
 
-2. Run the development server:
+  - Email: admin@example.com
+  - Password: password123
 
-```bash
-npm run dev
-```
+- **Security Guard**
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+  - Email: guard@example.com
+  - Password: password123
+
+- **Dispatch Officer**
+
+  - Email: dispatch@example.com
+  - Password: password123
+
+- **Warehouse Manager**
+  - Email: warehouse@example.com
+  - Password: password123
 
 ## Project Structure
 
 ```
-/src
-  /app             # Next.js app router pages and layouts
-  /components      # Reusable UI components
-    /ui           # ShadcN UI components
-    /forms        # Form-related components
-    /layout       # Layout components
-  /lib            # Utility functions and shared logic
-  /prisma         # Database schema and migrations
-/docs             # Project documentation
-/public           # Static assets
+src/
+├── app/              # Next.js app router pages
+├── components/       # React components
+├── lib/             # Utility functions and configurations
+└── types/           # TypeScript type definitions
 ```
 
-## Security
+## Development Status
 
-- Role-based access control
-- Secure signature storage
-- Data encryption for sensitive information
-- Regular backups and audit logging
+- [x] Initial project setup
+- [x] Authentication system
+- [ ] Core form implementation
+- [ ] Digital signatures
+- [ ] Workflow implementation
+- [ ] Export and print features
+- [ ] Security & optimization
+- [ ] Testing & documentation
 
 ## License
 
-MIT License - See LICENSE file for details
+MIT
