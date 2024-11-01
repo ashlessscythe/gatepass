@@ -1,5 +1,21 @@
 # Development Guidelines
 
+## Type System
+
+All TypeScript types should be centralized in the `src/types` directory. This includes:
+
+- Domain types (e.g., Gatepass related types)
+- Component prop types
+- API types
+- Utility types
+
+This centralization helps maintain consistency and makes it easier to:
+
+- Share types across components
+- Update types in one place
+- Track type changes
+- Maintain type documentation
+
 ## Pre-Commit Checklist
 
 Before committing any changes, ensure:

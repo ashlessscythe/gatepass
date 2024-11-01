@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Status } from "@prisma/client";
-import { GatepassTableData } from "@/types/gatepass";
+import { GatepassTableData, GatepassStatus } from "@/types";
 
 interface GatepassTableProps {
   initialData: GatepassTableData;
@@ -13,7 +12,7 @@ export function GatepassTable({ initialData }: GatepassTableProps) {
   const router = useRouter();
   const [data, setData] = useState(initialData);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<Status | "ALL">("ALL");
+  const [status, setStatus] = useState<GatepassStatus | "ALL">("ALL");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -45,7 +44,7 @@ export function GatepassTable({ initialData }: GatepassTableProps) {
     fetchData();
   };
 
-  const handleStatusChange = (value: Status | "ALL") => {
+  const handleStatusChange = (value: GatepassStatus | "ALL") => {
     setStatus(value);
     setPage(1);
     fetchData();
@@ -71,13 +70,15 @@ export function GatepassTable({ initialData }: GatepassTableProps) {
           <select
             value={status}
             onChange={(e) =>
-              handleStatusChange(e.target.value as Status | "ALL")
+              handleStatusChange(e.target.value as GatepassStatus | "ALL")
             }
             className="w-full sm:w-auto px-3 py-2 border rounded-md bg-background text-foreground"
           >
             <option value="ALL">All Status</option>
             <option value="PENDING">Pending</option>
-            <option value="IN_PROGRESS">In Progress</option>
+            <option value="BOL_VERIFIED">BOL Verified</option>
+            <option value="IN_YARD">In Yard</option>
+            <option value="LOADING">Loading</option>
             <option value="COMPLETED">Completed</option>
             <option value="CANCELLED">Cancelled</option>
           </select>
@@ -136,14 +137,15 @@ export function GatepassTable({ initialData }: GatepassTableProps) {
                       ${
                         gatepass.status === "COMPLETED"
                           ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-                          : gatepass.status === "IN_PROGRESS"
+                          : gatepass.status === "LOADING" ||
+                            gatepass.status === "IN_YARD"
                           ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100"
                           : gatepass.status === "CANCELLED"
                           ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
                           : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
                       }`}
                     >
-                      {gatepass.status.toLowerCase()}
+                      {gatepass.status.toLowerCase().replace("_", " ")}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">

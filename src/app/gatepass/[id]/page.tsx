@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { GatepassPreview } from "@/components/gatepass/GatepassPreview";
 import { prisma } from "@/lib/prisma";
 import { GatepassData } from "@/types/gatepass";
@@ -39,6 +38,9 @@ async function getGatepass(id: string): Promise<GatepassData | null> {
     timeOut: gatepass.timeOut?.toISOString() || null,
     createdAt: gatepass.createdAt.toISOString(),
     updatedAt: gatepass.updatedAt.toISOString(),
+    bolNumber: gatepass.bolNumber || null,
+    pickupDoor: gatepass.pickupDoor || null,
+    yardCheckinTime: gatepass.yardCheckinTime?.toISOString() || null,
   };
 }
 
@@ -52,19 +54,17 @@ export default async function GatepassDetailPage({
   }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Gate Pass Details
-          </h1>
-          <p className="text-muted-foreground">
-            View and manage gate pass information
-          </p>
-        </div>
-
-        <GatepassPreview data={gatepass} />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Gate Pass Details
+        </h1>
+        <p className="text-muted-foreground">
+          View and manage gate pass information
+        </p>
       </div>
-    </MainLayout>
+
+      <GatepassPreview data={gatepass} />
+    </div>
   );
 }

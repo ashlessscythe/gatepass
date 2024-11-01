@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-import { Status } from "@prisma/client";
+import { GatepassStatus } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status") as Status | null;
+    const status = searchParams.get("status") as GatepassStatus | null;
 
     if (!status || !["PENDING", "IN_PROGRESS"].includes(status)) {
       return new NextResponse("Invalid status", { status: 400 });

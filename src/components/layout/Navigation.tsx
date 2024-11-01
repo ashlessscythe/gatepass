@@ -3,48 +3,62 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { cn } from "@/lib/utils";
 
 export function Navigation() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  if (!session) return null;
-
-  const isActive = (path: string) => pathname === path;
+  if (!session?.user) return null;
 
   const links = [
     {
       href: "/dashboard",
       label: "Dashboard",
-      show: true,
+      roles: ["ADMIN", "GUARD", "DISPATCH", "WAREHOUSE"],
     },
     {
       href: "/guard",
-      label: "Guard Dashboard",
-      show: session.user.role === "GUARD",
+      label: "Guard",
+      roles: ["ADMIN", "GUARD"],
     },
     {
-      href: "/gatepass",
-      label: "New Gatepass",
-      show: true,
+      href: "/dispatch",
+      label: "Dispatch",
+      roles: ["ADMIN", "DISPATCH"],
+    },
+    {
+      href: "/warehouse",
+      label: "Warehouse",
+      roles: ["ADMIN", "WAREHOUSE"],
+    },
+    {
+      href: "/admin",
+      label: "Admin",
+      roles: ["ADMIN"],
     },
   ];
 
+  const userLinks = links.filter((link) =>
+    link.roles.includes(session.user.role as string)
+  );
+
   return (
-    <nav className="flex items-center space-x-6 text-sm font-medium">
-      {links
-        .filter((link) => link.show)
-        .map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`transition-colors hover:text-foreground/80 ${
-              isActive(link.href) ? "text-foreground" : "text-foreground/60"
-            }`}
-          >
-            {link.label}
-          </Link>
-        ))}
+    <nav className="flex space-x-4">
+      {userLinks.map((link) => (
+        <Link
+          key={link.href}
+          href={link.href}
+          className={cn(
+            "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+            pathname === link.href
+              ? "bg-secondary text-secondary-foreground"
+              : "text-muted-foreground hover:text-primary hover:bg-secondary/50"
+          )}
+        >
+          {link.label}
+        </Link>
+      ))}
     </nav>
   );
 }

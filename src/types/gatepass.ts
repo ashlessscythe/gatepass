@@ -1,4 +1,8 @@
-import { Status } from "@prisma/client";
+import type { User } from "./auth";
+import type { GatepassStatus as PrismaGatepassStatus } from "@prisma/client";
+
+// Re-export Prisma's GatepassStatus enum
+export { GatepassStatus } from "@prisma/client";
 
 export interface GatepassData {
   id: string;
@@ -14,7 +18,7 @@ export interface GatepassData {
   trailerNo: string | null;
   operatorName: string;
   passengerName: string | null;
-  purpose: string;
+  purpose: "PICKUP" | "SERVICE" | "DELIVER" | "OTHER";
   sealed: boolean;
   sealNo1: string | null;
   sealNo2: string | null;
@@ -30,15 +34,14 @@ export interface GatepassData {
   receiverSignature: string | null;
   shipperSignature: string | null;
   securitySignature: string | null;
-  status: Status;
-  createdBy: { name: string } | null;
-  updatedBy: { name: string } | null;
+  status: PrismaGatepassStatus;
+  createdBy: { name: string | null } | null;
+  updatedBy: { name: string | null } | null;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface GatepassPreviewProps {
-  data: GatepassData;
+  bolNumber: string | null;
+  pickupDoor: string | null;
+  yardCheckinTime: string | null;
 }
 
 export interface GatepassTableData {

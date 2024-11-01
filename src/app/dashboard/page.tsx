@@ -1,6 +1,5 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { GatepassTable } from "@/components/gatepass/GatepassTable";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -24,13 +23,15 @@ async function getGatepasses() {
 
   return {
     gatepasses: gatepasses.map((gatepass) => ({
-      ...gatepass,
+      id: gatepass.id,
+      formNumber: gatepass.formNumber,
       dateIn: gatepass.dateIn.toISOString(),
-      timeIn: gatepass.timeIn.toISOString(),
-      dateOut: gatepass.dateOut?.toISOString(),
-      timeOut: gatepass.timeOut?.toISOString(),
+      carrier: gatepass.carrier,
+      truckNo: gatepass.truckNo,
+      operatorName: gatepass.operatorName,
+      status: gatepass.status,
+      createdBy: gatepass.createdBy,
       createdAt: gatepass.createdAt.toISOString(),
-      updatedAt: gatepass.updatedAt.toISOString(),
     })),
     total,
     pages: Math.ceil(total / 10),
@@ -47,22 +48,20 @@ export default async function DashboardPage() {
   const data = await getGatepasses();
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Welcome, {session.user.name}
-          </h1>
-          <p className="text-muted-foreground">
-            You are logged in as a {session.user.role.toLowerCase()}
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Recent Gate Passes</h2>
-          <GatepassTable initialData={data} />
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Welcome, {session.user.name}
+        </h1>
+        <p className="text-muted-foreground">
+          You are logged in as a {session.user.role.toLowerCase()}
+        </p>
       </div>
-    </MainLayout>
+
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Recent Gate Passes</h2>
+        <GatepassTable initialData={data} />
+      </div>
+    </div>
   );
 }

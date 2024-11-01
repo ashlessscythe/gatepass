@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font";
-import "./globals.css";
-import { SessionProvider } from "@/components/providers/SessionProvider";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
+
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { SessionProvider } from "@/components/providers/SessionProvider";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { Toaster } from "@/components/ui/toaster";
+
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Gatepass System",
-  description: "A modern web application for managing truck gate passes",
+  title: "Gatepass",
+  description: "Gatepass Management System",
 };
 
 export default function RootLayout({
@@ -17,11 +22,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${GeistSans.className} min-h-screen bg-background font-sans antialiased`}
+        className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}
       >
-        <SessionProvider>
-          <ThemeProvider>{children}</ThemeProvider>
-        </SessionProvider>
+        <ThemeProvider>
+          <SessionProvider>
+            <MainLayout>{children}</MainLayout>
+            <Toaster />
+          </SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

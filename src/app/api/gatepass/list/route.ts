@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-import { Prisma, Status } from "@prisma/client";
+import { GatepassStatus, Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +48,7 @@ export async function GET(req: Request) {
           }
         : {}),
       ...(statusFilter && statusFilter !== "ALL"
-        ? { status: statusFilter as Status }
+        ? { status: statusFilter as GatepassStatus }
         : {}),
     };
 

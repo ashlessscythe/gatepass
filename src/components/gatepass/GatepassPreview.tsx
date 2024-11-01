@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { GatepassData } from "@/types/gatepass";
 import { formatDate, formatTime } from "@/lib/utils";
+import { GatepassStatus } from "@prisma/client";
 
 interface GatepassPreviewProps {
   data: GatepassData;
@@ -88,11 +89,11 @@ export function GatepassPreview({ data }: GatepassPreviewProps) {
         <span
           className={`px-2 py-1 text-xs font-semibold rounded-full self-start sm:self-center whitespace-nowrap
           ${
-            data.status === "COMPLETED"
+            data.status === GatepassStatus.COMPLETED
               ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-              : data.status === "IN_PROGRESS"
+              : data.status === GatepassStatus.PENDING
               ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100"
-              : data.status === "CANCELLED"
+              : data.status === GatepassStatus.CANCELLED
               ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
               : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
           }`}
@@ -131,6 +132,8 @@ export function GatepassPreview({ data }: GatepassPreviewProps) {
 
       <PreviewSection title="Purpose and Sealing">
         <PreviewField label="Purpose" value={data.purpose} />
+        <PreviewField label="BOL/Pickup No." value={data.bolNumber} />
+        <PreviewField label="Door" value={data.pickupDoor} />
         <PreviewField label="Sealed" value={data.sealed} />
         <PreviewField label="Seal No. 1" value={data.sealNo1} />
         <PreviewField label="Seal No. 2" value={data.sealNo2} />

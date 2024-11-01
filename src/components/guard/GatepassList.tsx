@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { formatDate, formatTime } from "@/lib/utils";
-import { GatepassData } from "@/types/gatepass";
+import { GatepassData, GatepassStatus } from "@/types";
 import { useState } from "react";
 
 interface GatepassListProps {
@@ -67,9 +67,9 @@ export function GatepassList({
                 <span
                   className={`px-2 py-1 text-xs font-semibold rounded-full
                   ${
-                    gatepass.status === "COMPLETED"
+                    gatepass.status === GatepassStatus.COMPLETED
                       ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-                      : gatepass.status === "IN_PROGRESS"
+                      : gatepass.status === GatepassStatus.PENDING
                       ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100"
                       : gatepass.status === "CANCELLED"
                       ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
@@ -99,7 +99,7 @@ export function GatepassList({
                 </p>
               </div>
               <div className="w-full sm:w-auto">
-                {gatepass.status === "PENDING" && (
+                {gatepass.status === GatepassStatus.PENDING && (
                   <button
                     onClick={() => handleAction(gatepass.id, "start")}
                     disabled={loading === gatepass.id}
@@ -108,7 +108,7 @@ export function GatepassList({
                     {loading === gatepass.id ? "Processing..." : "Start Entry"}
                   </button>
                 )}
-                {gatepass.status === "IN_PROGRESS" && (
+                {gatepass.status === GatepassStatus.IN_YARD && (
                   <button
                     onClick={() => handleAction(gatepass.id, "complete")}
                     disabled={loading === gatepass.id}

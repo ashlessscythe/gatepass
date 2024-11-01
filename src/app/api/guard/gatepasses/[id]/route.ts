@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-import { Status } from "@prisma/client";
+import { GatepassStatus } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +41,7 @@ export async function PATCH(
 
     console.log("[GUARD_GATEPASS_UPDATE] Current status:", gatepass.status);
 
-    let newStatus: Status;
+    let newStatus: GatepassStatus;
     let updateData: any = {};
 
     switch (action) {
@@ -54,11 +54,11 @@ export async function PATCH(
           );
           return new NextResponse("Invalid status transition", { status: 400 });
         }
-        newStatus = "IN_PROGRESS";
+        newStatus = GatepassStatus.PENDING;
         break;
 
       case "complete":
-        if (gatepass.status !== "IN_PROGRESS") {
+        if (gatepass.status !== GatepassStatus.PENDING) {
           console.log(
             "[GUARD_GATEPASS_UPDATE] Invalid transition from",
             gatepass.status,
@@ -66,7 +66,7 @@ export async function PATCH(
           );
           return new NextResponse("Invalid status transition", { status: 400 });
         }
-        newStatus = "COMPLETED";
+        newStatus = GatepassStatus.COMPLETED;
         updateData.dateOut = new Date();
         updateData.timeOut = new Date();
         break;

@@ -27,6 +27,14 @@ A modern web application for digitizing truck gate management processes. Replace
 - Clear workflow instructions
 - Initial driver and truck information capture
 
+### Dispatch Interface
+
+- BOL verification system
+- Yard management with check-in functionality
+- Pickup door assignment
+- Comprehensive status management
+- Real-time status updates
+
 ## Tech Stack
 
 - **Frontend:** Next.js 14 with TypeScript
@@ -95,6 +103,7 @@ src/
 │   ├── forms/       # Form components
 │   ├── gatepass/    # Gatepass-specific components
 │   ├── guard/       # Guard interface components
+│   ├── dispatch/    # Dispatch interface components
 │   ├── layout/      # Layout components
 │   ├── theme/       # Theme components
 │   └── ui/          # UI components
@@ -110,11 +119,12 @@ src/
    - Creates new gatepass for arriving truck
    - Directs driver to dispatch
 
-2. **Dispatch Verification** (Coming Soon)
+2. **Dispatch Verification**
 
    - Verifies information against BOL paperwork
    - Checks truck into yard management system
    - Assigns pickup door for live loads
+   - Manages truck status throughout the process
 
 3. **Warehouse Processing** (Coming Soon)
 
@@ -136,7 +146,7 @@ src/
 - [x] Theme support and dark mode
 - [x] Mobile responsiveness
 - [x] Guard interface
-- [ ] Dispatch interface
+- [x] Dispatch interface
 - [ ] Warehouse interface
 - [ ] Exit verification
 - [ ] Export and print features

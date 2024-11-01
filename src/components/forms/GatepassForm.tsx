@@ -10,12 +10,14 @@ import { FormCheckbox } from "./FormCheckbox";
 import { FormSignature } from "./FormSignature";
 import { Toast } from "@/components/ui/toast";
 import { GatepassPreview } from "@/components/gatepass/GatepassPreview";
-import { GatepassData } from "@/types/gatepass";
+import type { GatepassData } from "@/types/gatepass";
+import { GatepassStatus } from "@prisma/client";
 import {
   GatepassFormValues,
   gatepassFormSchema,
   defaultValues,
 } from "@/lib/schemas/gatepass";
+import { ToastProvider } from "@radix-ui/react-toast";
 
 const purposeOptions = [
   { value: "PICKUP", label: "Pick up" },
@@ -31,7 +33,7 @@ export function GatepassForm() {
   const [previewData, setPreviewData] = useState<GatepassData | null>(null);
   const [toast, setToast] = useState<{
     message: string;
-    type: "success" | "error";
+    type: "foreground" | "background";
   } | null>(null);
 
   const methods = useForm<GatepassFormValues>({
@@ -71,7 +73,7 @@ export function GatepassForm() {
 
       setToast({
         message: "Gatepass created successfully",
-        type: "success",
+        type: "foreground",
       });
 
       setTimeout(() => {
@@ -82,7 +84,7 @@ export function GatepassForm() {
       console.error("Error creating gatepass:", error);
       setToast({
         message: "Failed to create gatepass. Please try again.",
-        type: "error",
+        type: "background",
       });
     } finally {
       setLoading(false);
@@ -93,43 +95,40 @@ export function GatepassForm() {
     const isValid = await methods.trigger();
     if (isValid) {
       const formData = methods.getValues();
-      const data: GatepassData = {
+      const now = new Date().toISOString();
+
+      const previewData: GatepassData = {
+        ...formData,
         id: "preview",
-        formNumber: null,
-        dateIn: formData.dateIn,
-        timeIn: formData.timeIn,
-        dateOut: null,
-        timeOut: null,
-        carrier: formData.carrier,
-        truckLicenseNo: formData.truckLicenseNo,
-        truckNo: formData.truckNo,
+        formNumber: formData.formNumber || null,
+        status: GatepassStatus.PENDING,
+        createdBy: null,
+        updatedBy: null,
+        createdAt: now,
+        updatedAt: now,
+        bolNumber: null,
+        pickupDoor: null,
+        yardCheckinTime: null,
+        // Ensure all optional fields are properly nulled
+        dateOut: formData.dateOut || null,
+        timeOut: formData.timeOut || null,
         trailerLicenseNo: formData.trailerLicenseNo || null,
         trailerNo: formData.trailerNo || null,
-        operatorName: formData.operatorName,
         passengerName: formData.passengerName || null,
-        purpose: formData.purpose,
-        sealed: formData.sealed,
         sealNo1: formData.sealNo1 || null,
         sealNo2: formData.sealNo2 || null,
         remarks: formData.remarks || null,
-        securityOfficer: formData.securityOfficer,
         releaseRemarks: formData.releaseRemarks || null,
         trailerType: formData.trailerType || null,
         releaseTrailerNo: formData.releaseTrailerNo || null,
         destination: formData.destination || null,
-        vehicleInspected: formData.vehicleInspected,
         releaseSealNo: formData.releaseSealNo || null,
-        vestReturned: formData.vestReturned,
         receiverSignature: formData.receiverSignature || null,
         shipperSignature: formData.shipperSignature || null,
         securitySignature: formData.securitySignature || null,
-        status: "PENDING",
-        createdBy: null,
-        updatedBy: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
       };
-      setPreviewData(data);
+
+      setPreviewData(previewData);
       setPreview(true);
     }
   };
@@ -364,13 +363,9 @@ export function GatepassForm() {
           </div>
         </form>
       </FormProvider>
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+      <ToastProvider>
+        {toast && <Toast title={toast.message} type={toast.type} />}
+      </ToastProvider>
     </>
   );
 }

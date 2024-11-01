@@ -1,20 +1,25 @@
-import { PrismaClient, Role, Status } from "@prisma/client";
+import { PrismaClient, Role, GatepassStatus, Purpose } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create test users
-  const password = await hash("password123", 12);
+  // Clean up existing data
+  await prisma.gatepass.deleteMany();
+  await prisma.user.deleteMany();
 
+  // Hash default password
+  const hashedPassword = await hash("password123", 10);
+
+  // Create users
   const admin = await prisma.user.upsert({
     where: { email: "admin@example.com" },
     update: {},
     create: {
       email: "admin@example.com",
       name: "Admin User",
-      password,
       role: Role.ADMIN,
+      password: hashedPassword,
     },
   });
 
@@ -23,65 +28,108 @@ async function main() {
     update: {},
     create: {
       email: "guard@example.com",
-      name: "Security Guard",
-      password,
+      name: "Guard User",
       role: Role.GUARD,
+      password: hashedPassword,
     },
   });
 
-  // Create test gatepasses
-  const now = new Date();
+  const dispatch = await prisma.user.upsert({
+    where: { email: "dispatch@example.com" },
+    update: {},
+    create: {
+      email: "dispatch@example.com",
+      name: "Dispatch User",
+      role: Role.DISPATCH,
+      password: hashedPassword,
+    },
+  });
 
-  // Pending gatepass
-  await prisma.gatepass.create({
+  const warehouse = await prisma.user.upsert({
+    where: { email: "warehouse@example.com" },
+    update: {},
+    create: {
+      email: "warehouse@example.com",
+      name: "Warehouse User",
+      role: Role.WAREHOUSE,
+      password: hashedPassword,
+    },
+  });
+
+  // Create sample gatepasses
+  const gatepass1 = await prisma.gatepass.create({
     data: {
-      formNumber: "ABC123",
-      dateIn: now,
-      timeIn: now,
-      carrier: "Test Carrier 1",
-      truckLicenseNo: "TL123",
+      formNumber: "GP001",
+      dateIn: new Date(),
+      timeIn: new Date(),
+      carrier: "ABC Logistics",
+      truckLicenseNo: "ABC123",
       truckNo: "T001",
       operatorName: "John Doe",
-      purpose: "PICKUP",
+      purpose: Purpose.PICKUP,
       sealed: false,
-      securityOfficer: "Guard 1",
-      status: Status.PENDING,
-      vehicleInspected: false,
-      vestReturned: false,
-      createdBy: {
-        connect: {
-          id: guard.id,
-        },
-      },
-    },
-  });
-
-  // In Progress gatepass
-  await prisma.gatepass.create({
-    data: {
-      formNumber: "DEF456",
-      dateIn: now,
-      timeIn: now,
-      carrier: "Test Carrier 2",
-      truckLicenseNo: "TL456",
-      truckNo: "T002",
-      operatorName: "Jane Smith",
-      purpose: "DELIVER",
-      sealed: true,
-      sealNo1: "S123",
-      securityOfficer: "Guard 1",
-      status: Status.IN_PROGRESS,
+      securityOfficer: "Guard User",
       vehicleInspected: true,
       vestReturned: false,
-      createdBy: {
-        connect: {
-          id: guard.id,
-        },
-      },
+      status: GatepassStatus.PENDING,
+      createdById: guard.id,
     },
   });
 
-  console.log("Seed data created successfully");
+  const gatepass2 = await prisma.gatepass.create({
+    data: {
+      formNumber: "GP002",
+      dateIn: new Date(),
+      timeIn: new Date(),
+      carrier: "XYZ Transport",
+      truckLicenseNo: "XYZ789",
+      truckNo: "T002",
+      operatorName: "Jane Smith",
+      purpose: Purpose.DELIVER,
+      sealed: true,
+      sealNo1: "S001",
+      securityOfficer: "Guard User",
+      vehicleInspected: true,
+      vestReturned: false,
+      status: GatepassStatus.BOL_VERIFIED,
+      createdById: guard.id,
+      updatedById: dispatch.id,
+      bolNumber: "BOL123",
+    },
+  });
+
+  const gatepass3 = await prisma.gatepass.create({
+    data: {
+      formNumber: "GP003",
+      dateIn: new Date(),
+      timeIn: new Date(),
+      carrier: "Fast Freight",
+      truckLicenseNo: "FF456",
+      truckNo: "T003",
+      operatorName: "Bob Wilson",
+      purpose: Purpose.PICKUP,
+      sealed: false,
+      securityOfficer: "Guard User",
+      vehicleInspected: true,
+      vestReturned: false,
+      status: GatepassStatus.IN_YARD,
+      createdById: guard.id,
+      updatedById: dispatch.id,
+      bolNumber: "BOL456",
+      pickupDoor: "12",
+      yardCheckinTime: new Date(),
+    },
+  });
+
+  console.log({
+    admin,
+    guard,
+    dispatch,
+    warehouse,
+    gatepass1,
+    gatepass2,
+    gatepass3,
+  });
 }
 
 main()

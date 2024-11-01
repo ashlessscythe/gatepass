@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,82 +7,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Gatepass {
-  id                String    @id @default(cuid())
-  formNumber       String?   // No.
-  dateIn           DateTime
-  timeIn           DateTime
-  dateOut          DateTime?
-  timeOut          DateTime?
-  carrier          String
-  truckLicenseNo   String    // License No. Truck
-  truckNo          String    // Truck No.
-  trailerLicenseNo String?   // License No. Trailer
-  trailerNo        String?   // Trailer No.
-  operatorName     String    // Name of Operator
-  passengerName    String?   // Name of Passenger
-  purpose          Purpose
-  sealed           Boolean
-  sealNo1          String?   // Seal No. 1
-  sealNo2          String?   // Seal No. 2
-  remarks          String?   // Remarks
-  securityOfficer  String    // Security Officer
-  
-  // Release Pass Details
-  releaseRemarks   String?   // Release Pass Remarks
-  trailerType      String?   // Trailer Type
-  releaseTrailerNo String?   // Trailer No. (Release)
-  destination      String?   // Destination
-  vehicleInspected Boolean   // Vehicle Inspected
-  releaseSealNo    String?   // Seal No. (Release)
-  vestReturned     Boolean   // Vest Returned
-  
-  // Signatures (stored as base64 strings)
-  receiverSignature    String?   // Receiver's signature
-  shipperSignature     String?   // Shipper's signature
-  securitySignature    String?   // Security Officer's signature for release
-  
-  // Metadata
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  status           Status    @default(PENDING)
-  createdBy        User?     @relation("CreatedGatepasses", fields: [createdById], references: [id])
-  createdById      String?
-  updatedBy        User?     @relation("UpdatedGatepasses", fields: [updatedById], references: [id])
-  updatedById      String?
-  
-  @@index([formNumber])
-  @@index([dateIn])
-  @@index([carrier])
-}
-
-enum Purpose {
-  PICKUP
-  SERVICE
-  DELIVER
-  OTHER
-}
-
-enum Status {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -102,18 +36,16 @@ model Session {
 
 model User {
   id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  password      String
-  role          Role      @default(GUARD)
+  name          String?
+  email         String?   @unique
   emailVerified DateTime?
   image         String?
+  password      String?
+  role          Role      @default(GUARD)
   accounts      Account[]
   sessions      Session[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  createdGatepasses Gatepass[] @relation("CreatedGatepasses")
-  updatedGatepasses Gatepass[] @relation("UpdatedGatepasses")
+  createdPasses Gatepass[] @relation("CreatedBy")
+  updatedPasses Gatepass[] @relation("UpdatedBy")
 }
 
 model VerificationToken {
@@ -125,8 +57,71 @@ model VerificationToken {
 }
 
 enum Role {
+  ADMIN
   GUARD
   DISPATCH
   WAREHOUSE
-  ADMIN
+}
+
+enum GatepassStatus {
+  PENDING
+  BOL_VERIFIED
+  IN_YARD
+  LOADING
+  COMPLETED
+  CANCELLED
+}
+
+enum Purpose {
+  PICKUP
+  SERVICE
+  DELIVER
+  OTHER
+}
+
+model Gatepass {
+  id                String         @id @default(cuid())
+  formNumber       String?        @unique
+  dateIn           DateTime
+  timeIn           DateTime
+  dateOut          DateTime?
+  timeOut          DateTime?
+  carrier          String
+  truckLicenseNo   String        // License No. Truck
+  truckNo          String        // Truck No.
+  trailerLicenseNo String?       // License No. Trailer
+  trailerNo        String?       // Trailer No.
+  operatorName     String        // Name of Operator
+  passengerName    String?       // Name of Passenger
+  purpose          Purpose
+  sealed           Boolean
+  sealNo1          String?       // Seal No. 1
+  sealNo2          String?       // Seal No. 2
+  remarks          String?       // Remarks
+  securityOfficer  String        // Security Officer
+  releaseRemarks   String?       // Release Pass Remarks
+  trailerType      String?       // Trailer Type
+  releaseTrailerNo String?       // Trailer No. (Release)
+  destination      String?       // Destination
+  vehicleInspected Boolean       // Vehicle Inspected
+  releaseSealNo    String?       // Seal No. (Release)
+  vestReturned     Boolean       // Vest Returned
+  receiverSignature String?      @db.Text
+  shipperSignature  String?      @db.Text
+  securitySignature String?      @db.Text
+  status           GatepassStatus @default(PENDING)
+  bolNumber        String?
+  pickupDoor       String?
+  yardCheckinTime  DateTime?
+  createdById      String
+  updatedById      String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  createdBy        User          @relation("CreatedBy", fields: [createdById], references: [id])
+  updatedBy        User?         @relation("UpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([formNumber])
+  @@index([dateIn])
+  @@index([carrier])
 }
