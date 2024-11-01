@@ -1,135 +1,184 @@
 import { PrismaClient, Role, GatepassStatus, Purpose } from "@prisma/client";
 import { hash } from "bcryptjs";
+import { faker } from "@faker-js/faker";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 
 const prisma = new PrismaClient();
 
+// Parse command line arguments
+const argv = yargs(hideBin(process.argv))
+  .option("gatepass-count", {
+    alias: "g",
+    type: "number",
+    description: "Number of gatepasses to generate",
+    default: 10,
+  })
+  .option("user-count", {
+    alias: "u",
+    type: "number",
+    description: "Number of additional users to generate per role",
+    default: 2,
+  }).argv;
+
+const generateRandomGatepass = (users: any[]) => {
+  const createdBy = users[Math.floor(Math.random() * users.length)];
+  const updatedBy =
+    Math.random() > 0.5
+      ? users[Math.floor(Math.random() * users.length)]
+      : null;
+  const status = faker.helpers.arrayElement(Object.values(GatepassStatus));
+  const purpose = faker.helpers.arrayElement(Object.values(Purpose));
+  const sealed = faker.datatype.boolean();
+
+  return {
+    formNumber: `GP${faker.number.int({ min: 1000, max: 9999 })}`,
+    dateIn: faker.date.recent({ days: 30 }),
+    timeIn: faker.date.recent({ days: 30 }),
+    dateOut:
+      status === GatepassStatus.COMPLETED
+        ? faker.date.recent({ days: 1 })
+        : null,
+    timeOut:
+      status === GatepassStatus.COMPLETED
+        ? faker.date.recent({ days: 1 })
+        : null,
+    carrier: faker.company.name(),
+    truckLicenseNo: faker.string.alphanumeric(6).toUpperCase(),
+    truckNo: `T${faker.number.int({ min: 100, max: 999 })}`,
+    trailerLicenseNo: faker.string.alphanumeric(7).toUpperCase(),
+    trailerNo: `TR${faker.number.int({ min: 100, max: 999 })}`,
+    operatorName: faker.person.fullName(),
+    passengerName: Math.random() > 0.7 ? faker.person.fullName() : null,
+    purpose,
+    sealed,
+    sealNo1: sealed ? faker.string.alphanumeric(8).toUpperCase() : null,
+    sealNo2:
+      sealed && Math.random() > 0.8
+        ? faker.string.alphanumeric(8).toUpperCase()
+        : null,
+    remarks: Math.random() > 0.7 ? faker.lorem.sentence() : null,
+    securityOfficer: faker.person.fullName(),
+    releaseRemarks:
+      status === GatepassStatus.COMPLETED ? faker.lorem.sentence() : null,
+    trailerType: faker.helpers.arrayElement([
+      "Box",
+      "Flatbed",
+      "Refrigerated",
+      "Container",
+    ]),
+    releaseTrailerNo:
+      status === GatepassStatus.COMPLETED
+        ? `RTR${faker.number.int({ min: 100, max: 999 })}`
+        : null,
+    destination: faker.location.city(),
+    vehicleInspected: faker.datatype.boolean(),
+    releaseSealNo:
+      status === GatepassStatus.COMPLETED
+        ? faker.string.alphanumeric(8).toUpperCase()
+        : null,
+    vestReturned:
+      status === GatepassStatus.COMPLETED ? true : faker.datatype.boolean(),
+    receiverSignature:
+      status === GatepassStatus.COMPLETED
+        ? faker.string.alphanumeric(64)
+        : null,
+    shipperSignature:
+      status === GatepassStatus.COMPLETED
+        ? faker.string.alphanumeric(64)
+        : null,
+    securitySignature:
+      status === GatepassStatus.COMPLETED
+        ? faker.string.alphanumeric(64)
+        : null,
+    status,
+    bolNumber:
+      status !== GatepassStatus.PENDING
+        ? `BOL${faker.number.int({ min: 10000, max: 99999 })}`
+        : null,
+    pickupDoor:
+      status === GatepassStatus.IN_YARD
+        ? faker.number.int({ min: 1, max: 50 }).toString()
+        : null,
+    yardCheckinTime:
+      status === GatepassStatus.IN_YARD ? faker.date.recent({ days: 1 }) : null,
+    createdBy: {
+      connect: {
+        id: createdBy.id,
+      },
+    },
+    updatedBy: updatedBy
+      ? {
+          connect: {
+            id: updatedBy.id,
+          },
+        }
+      : undefined,
+  };
+};
+
+const generateUser = async (role: Role, index: number) => {
+  const hashedPassword = await hash("password123", 10);
+  return prisma.user.create({
+    data: {
+      email: `${role.toLowerCase()}${index}@example.com`,
+      name: faker.person.fullName(),
+      role,
+      password: hashedPassword,
+    },
+  });
+};
+
 async function main() {
+  const gatepassCount = (argv as any)["gatepass-count"];
+  const userCount = (argv as any)["user-count"];
+
+  console.log(
+    `Generating ${userCount} users per role and ${gatepassCount} gatepasses...`
+  );
+
   // Clean up existing data
   await prisma.gatepass.deleteMany();
   await prisma.user.deleteMany();
 
-  // Hash default password
-  const hashedPassword = await hash("password123", 10);
+  // Create default users
+  const defaultUsers = await Promise.all([
+    generateUser(Role.ADMIN, 0),
+    generateUser(Role.GUARD, 0),
+    generateUser(Role.DISPATCH, 0),
+    generateUser(Role.WAREHOUSE, 0),
+  ]);
 
-  // Create users
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@example.com" },
-    update: {},
-    create: {
-      email: "admin@example.com",
-      name: "Admin User",
-      role: Role.ADMIN,
-      password: hashedPassword,
-    },
-  });
+  // Create additional users for each role
+  const additionalUsers = await Promise.all([
+    ...Array(userCount)
+      .fill(0)
+      .map((_, i) => generateUser(Role.ADMIN, i + 1)),
+    ...Array(userCount)
+      .fill(0)
+      .map((_, i) => generateUser(Role.GUARD, i + 1)),
+    ...Array(userCount)
+      .fill(0)
+      .map((_, i) => generateUser(Role.DISPATCH, i + 1)),
+    ...Array(userCount)
+      .fill(0)
+      .map((_, i) => generateUser(Role.WAREHOUSE, i + 1)),
+  ]);
 
-  const guard = await prisma.user.upsert({
-    where: { email: "guard@example.com" },
-    update: {},
-    create: {
-      email: "guard@example.com",
-      name: "Guard User",
-      role: Role.GUARD,
-      password: hashedPassword,
-    },
-  });
+  const allUsers = [...defaultUsers, ...additionalUsers];
 
-  const dispatch = await prisma.user.upsert({
-    where: { email: "dispatch@example.com" },
-    update: {},
-    create: {
-      email: "dispatch@example.com",
-      name: "Dispatch User",
-      role: Role.DISPATCH,
-      password: hashedPassword,
-    },
-  });
+  // Create gatepasses
+  const gatepasses = await Promise.all(
+    Array(gatepassCount)
+      .fill(0)
+      .map(() =>
+        prisma.gatepass.create({ data: generateRandomGatepass(allUsers) })
+      )
+  );
 
-  const warehouse = await prisma.user.upsert({
-    where: { email: "warehouse@example.com" },
-    update: {},
-    create: {
-      email: "warehouse@example.com",
-      name: "Warehouse User",
-      role: Role.WAREHOUSE,
-      password: hashedPassword,
-    },
-  });
-
-  // Create sample gatepasses
-  const gatepass1 = await prisma.gatepass.create({
-    data: {
-      formNumber: "GP001",
-      dateIn: new Date(),
-      timeIn: new Date(),
-      carrier: "ABC Logistics",
-      truckLicenseNo: "ABC123",
-      truckNo: "T001",
-      operatorName: "John Doe",
-      purpose: Purpose.PICKUP,
-      sealed: false,
-      securityOfficer: "Guard User",
-      vehicleInspected: true,
-      vestReturned: false,
-      status: GatepassStatus.PENDING,
-      createdById: guard.id,
-    },
-  });
-
-  const gatepass2 = await prisma.gatepass.create({
-    data: {
-      formNumber: "GP002",
-      dateIn: new Date(),
-      timeIn: new Date(),
-      carrier: "XYZ Transport",
-      truckLicenseNo: "XYZ789",
-      truckNo: "T002",
-      operatorName: "Jane Smith",
-      purpose: Purpose.DELIVER,
-      sealed: true,
-      sealNo1: "S001",
-      securityOfficer: "Guard User",
-      vehicleInspected: true,
-      vestReturned: false,
-      status: GatepassStatus.BOL_VERIFIED,
-      createdById: guard.id,
-      updatedById: dispatch.id,
-      bolNumber: "BOL123",
-    },
-  });
-
-  const gatepass3 = await prisma.gatepass.create({
-    data: {
-      formNumber: "GP003",
-      dateIn: new Date(),
-      timeIn: new Date(),
-      carrier: "Fast Freight",
-      truckLicenseNo: "FF456",
-      truckNo: "T003",
-      operatorName: "Bob Wilson",
-      purpose: Purpose.PICKUP,
-      sealed: false,
-      securityOfficer: "Guard User",
-      vehicleInspected: true,
-      vestReturned: false,
-      status: GatepassStatus.IN_YARD,
-      createdById: guard.id,
-      updatedById: dispatch.id,
-      bolNumber: "BOL456",
-      pickupDoor: "12",
-      yardCheckinTime: new Date(),
-    },
-  });
-
-  console.log({
-    admin,
-    guard,
-    dispatch,
-    warehouse,
-    gatepass1,
-    gatepass2,
-    gatepass3,
-  });
+  console.log(
+    `Created ${allUsers.length} users and ${gatepasses.length} gatepasses`
+  );
 }
 
 main()

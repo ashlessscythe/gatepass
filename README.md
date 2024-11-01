@@ -61,10 +61,27 @@ A modern web application for digitizing truck gate management processes. Replace
    ```bash
    npx prisma migrate dev
    ```
-5. Seed the database with test users:
+5. Seed the database with test data:
+
    ```bash
+   # Basic seeding with default values
    npx prisma db seed
+
+   # Custom seeding with specific counts
+   npx prisma db seed -- --gatepass-count 50 --user-count 5
    ```
+
+   Seeding options:
+
+   - `--gatepass-count` or `-g`: Number of gatepasses to generate (default: 10)
+   - `--user-count` or `-u`: Number of additional users per role (default: 2)
+
+   The seed script will create:
+
+   - One default user for each role
+   - Additional users per role based on --user-count
+   - Random gatepasses with realistic data based on --gatepass-count
+
 6. Start the development server:
    ```bash
    npm run dev

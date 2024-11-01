@@ -6,12 +6,8 @@ import { authOptions } from "@/lib/auth";
 export default async function GuardPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
+  if (!session || !["ADMIN", "GUARD"].includes(session.user.role)) {
     redirect("/login");
-  }
-
-  if (session.user.role !== "GUARD") {
-    redirect("/dashboard");
   }
 
   return (
