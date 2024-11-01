@@ -56,6 +56,7 @@ A modern web application for digitizing truck gate management processes. Replace
    DATABASE_URL=your_postgres_url
    NEXTAUTH_SECRET=your_secret
    NEXTAUTH_URL=http://localhost:3000
+   SEED_DEFAULT_PASSWORD=your_secure_password  # Optional: For database seeding
    ```
 4. Run database migrations:
    ```bash
@@ -67,20 +68,28 @@ A modern web application for digitizing truck gate management processes. Replace
    # Basic seeding with default values
    npx prisma db seed
 
-   # Custom seeding with specific counts
-   npx prisma db seed -- --gatepass-count 50 --user-count 5
+   # Custom seeding with specific counts and password
+   npx prisma db seed -- --gatepass-count 50 --user-count 5 --default-password "secure123" --salt-rounds 12
    ```
 
    Seeding options:
 
    - `--gatepass-count` or `-g`: Number of gatepasses to generate (default: 10)
    - `--user-count` or `-u`: Number of additional users per role (default: 2)
+   - `--default-password` or `-p`: Password for generated users (default: "changeme123" or SEED_DEFAULT_PASSWORD env var)
+   - `--salt-rounds` or `-s`: Number of bcrypt salt rounds (default: 12)
 
    The seed script will create:
 
    - One default user for each role
    - Additional users per role based on --user-count
    - Random gatepasses with realistic data based on --gatepass-count
+
+   For security in production environments:
+
+   - Set a strong password using SEED_DEFAULT_PASSWORD environment variable
+   - Change default passwords after seeding
+   - Consider increasing salt rounds for stronger hashing
 
 6. Start the development server:
    ```bash
@@ -93,22 +102,24 @@ The following test accounts are available after seeding:
 
 - **Admin**
 
-  - Email: admin@example.com
-  - Password: password123
+  - Email: admin0@example.com
+  - Password: (specified by --default-password or SEED_DEFAULT_PASSWORD)
 
 - **Security Guard**
 
-  - Email: guard@example.com
-  - Password: password123
+  - Email: guard0@example.com
+  - Password: (specified by --default-password or SEED_DEFAULT_PASSWORD)
 
 - **Dispatch Officer**
 
-  - Email: dispatch@example.com
-  - Password: password123
+  - Email: dispatch0@example.com
+  - Password: (specified by --default-password or SEED_DEFAULT_PASSWORD)
 
 - **Warehouse Manager**
-  - Email: warehouse@example.com
-  - Password: password123
+  - Email: warehouse0@example.com
+  - Password: (specified by --default-password or SEED_DEFAULT_PASSWORD)
+
+Additional users are created with incrementing numbers (e.g., admin1@example.com, guard1@example.com) based on the --user-count option.
 
 ## Project Structure
 

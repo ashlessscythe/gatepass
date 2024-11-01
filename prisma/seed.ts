@@ -19,6 +19,18 @@ const argv = yargs(hideBin(process.argv))
     type: "number",
     description: "Number of additional users to generate per role",
     default: 2,
+  })
+  .option("default-password", {
+    alias: "p",
+    type: "string",
+    description: "Default password for generated users",
+    default: process.env.SEED_DEFAULT_PASSWORD || "changeme123",
+  })
+  .option("salt-rounds", {
+    alias: "s",
+    type: "number",
+    description: "Number of salt rounds for password hashing",
+    default: 12,
   }).argv;
 
 const generateRandomGatepass = (users: any[]) => {
@@ -118,7 +130,10 @@ const generateRandomGatepass = (users: any[]) => {
 };
 
 const generateUser = async (role: Role, index: number) => {
-  const hashedPassword = await hash("password123", 10);
+  const defaultPassword = (argv as any)["default-password"];
+  const saltRounds = (argv as any)["salt-rounds"];
+  const hashedPassword = await hash(defaultPassword, saltRounds);
+
   return prisma.user.create({
     data: {
       email: `${role.toLowerCase()}${index}@example.com`,
@@ -132,10 +147,15 @@ const generateUser = async (role: Role, index: number) => {
 async function main() {
   const gatepassCount = (argv as any)["gatepass-count"];
   const userCount = (argv as any)["user-count"];
+  const defaultPassword = (argv as any)["default-password"];
 
-  console.log(
-    `Generating ${userCount} users per role and ${gatepassCount} gatepasses...`
-  );
+  console.log(`
+Seeding database with:
+- ${userCount} additional users per role
+- ${gatepassCount} gatepasses
+- Default password: ${defaultPassword}
+- Salt rounds: ${(argv as any)["salt-rounds"]}
+`);
 
   // Clean up existing data
   await prisma.gatepass.deleteMany();
