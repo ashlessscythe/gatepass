@@ -1,5 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+"use client";
+
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -8,61 +17,53 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import type { GatepassData } from "@/types/gatepass";
 import { GatepassStatus } from "@prisma/client";
-import { Input } from "../ui/input";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import type { Gatepass } from "@/types/gatepass";
+import { formatDate } from "@/lib/utils";
 
 export function YardManagement() {
-  const [verifiedGatepasses, setVerifiedGatepasses] = useState<GatepassData[]>(
-    []
-  );
+  const [gatepasses, setGatepasses] = useState<Gatepass[]>([]);
   const [pickupDoors, setPickupDoors] = useState<{ [id: string]: string }>({});
   const [statuses, setStatuses] = useState<{ [id: string]: GatepassStatus }>(
     {}
   );
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const fetchVerifiedGatepasses = useCallback(async () => {
+  const fetchGatepasses = async () => {
     try {
-      const response = await fetch("/api/dispatch/pending-verification");
-      if (!response.ok) throw new Error("Failed to fetch pending gatepasses");
+      setLoading(true);
+      const response = await fetch("/api/dispatch/verified-gatepasses");
+      if (!response.ok) throw new Error("Failed to fetch gatepasses");
       const data = await response.json();
-      setVerifiedGatepasses(data);
+      setGatepasses(data);
 
-      // Initialize pickupDoors and statuses state for each gatepass
+      // Initialize pickup doors and statuses
       const initialDoors: { [id: string]: string } = {};
       const initialStatuses: { [id: string]: GatepassStatus } = {};
-
-      data.forEach((gp: GatepassData) => {
-        initialDoors[gp.id] = gp.pickupDoor || "";
-        initialStatuses[gp.id] = gp.status;
+      data.forEach((gatepass: Gatepass) => {
+        initialDoors[gatepass.id] = gatepass.pickupDoor || "";
+        initialStatuses[gatepass.id] = gatepass.status;
       });
-
       setPickupDoors(initialDoors);
       setStatuses(initialStatuses);
     } catch (error) {
+      console.error("Error fetching gatepasses:", error);
       toast({
         title: "Error",
-        description: "Failed to load pending gatepasses",
+        description: "Failed to fetch gatepasses",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
-  }, [toast]);
-
-  useEffect(() => {
-    fetchVerifiedGatepasses();
-  }, [fetchVerifiedGatepasses]);
+  };
 
   const updateStatus = async (gatepassId: string, status: GatepassStatus) => {
     try {
+      setLoading(true);
       const response = await fetch("/api/dispatch/update-status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -71,154 +72,153 @@ export function YardManagement() {
 
       if (!response.ok) throw new Error("Failed to update status");
 
-      const updatedGatepass = await response.json();
-
       toast({
         title: "Success",
         description: "Status updated successfully",
       });
 
-      setVerifiedGatepasses((prev) =>
-        prev.map((gp) => (gp.id === gatepassId ? { ...gp, status } : gp))
-      );
+      // Update local state
+      setStatuses((prev) => ({ ...prev, [gatepassId]: status }));
     } catch (error) {
+      console.error("Error updating status:", error);
       toast({
         title: "Error",
         description: "Failed to update status",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const assignDoor = async (gatepassId: string, doorNumber: string) => {
+  const assignPickupDoor = async (gatepassId: string) => {
+    const door = pickupDoors[gatepassId];
+    if (!door) return;
+
     try {
+      setLoading(true);
       const response = await fetch("/api/dispatch/assign-door", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gatepassId, doorNumber }),
+        body: JSON.stringify({ gatepassId, door }),
       });
 
       if (!response.ok) throw new Error("Failed to assign door");
 
-      const updatedGatepass = await response.json();
-
       toast({
         title: "Success",
-        description: "Door updated successfully",
+        description: "Pickup door assigned successfully",
       });
 
-      setVerifiedGatepasses((prev) =>
-        prev.map((gp) =>
-          gp.id === gatepassId ? { ...gp, pickupDoor: doorNumber } : gp
-        )
-      );
+      // Update status to IN_YARD after assigning door
+      await updateStatus(gatepassId, GatepassStatus.IN_YARD);
     } catch (error) {
+      console.error("Error assigning door:", error);
       toast({
         title: "Error",
-        description: "Failed to update door",
+        description: "Failed to assign pickup door",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleDoorChange = (id: string, value: string) => {
-    setPickupDoors((prev) => ({
-      ...prev,
-      [id]: value.toUpperCase(),
-    }));
   };
 
   const handleStatusChange = async (id: string, value: GatepassStatus) => {
     await updateStatus(id, value);
-    setStatuses((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
   };
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Yard Management</h2>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Gatepass No.</TableHead>
-            <TableHead>Date In</TableHead>
-            <TableHead>Carrier</TableHead>
-            <TableHead>Driver</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Door</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {verifiedGatepasses.map((gatepass) => (
-            <TableRow key={gatepass.id}>
-              <TableCell>{gatepass.formNumber}</TableCell>
-              <TableCell>
-                {new Date(gatepass.dateIn).toLocaleDateString()}
-              </TableCell>
-              <TableCell>{gatepass.carrier}</TableCell>
-              <TableCell>{gatepass.operatorName}</TableCell>
-              <TableCell>
-                <Select
-                  value={statuses[gatepass.id] || gatepass.status}
-                  onValueChange={(value) =>
-                    handleStatusChange(gatepass.id, value as GatepassStatus)
-                  }
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(GatepassStatus).map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="text"
-                    value={pickupDoors[gatepass.id] || ""}
-                    onChange={(e) =>
-                      handleDoorChange(gatepass.id, e.target.value)
-                    }
-                    pattern="[A-Z]\d{2}"
-                    placeholder="Door"
-                    className="w-24 border rounded text-foreground bg-background px-2 py-1 text-center"
-                  />
-                  <button
-                    onClick={() =>
-                      assignDoor(gatepass.id, pickupDoors[gatepass.id] || "")
-                    }
-                    className="px-3 py-1 text-foreground bg-background border rounded hover:bg-blue-600 disabled:bg-gray-400"
-                    disabled={!pickupDoors[gatepass.id]}
-                  >
-                    Update
-                  </button>
-                </div>
-              </TableCell>
-              <TableCell>
-                {gatepass.status === GatepassStatus.BOL_VERIFIED && (
-                  <Button
-                    onClick={() =>
-                      handleStatusChange(gatepass.id, GatepassStatus.IN_YARD)
-                    }
-                    disabled={!pickupDoors[gatepass.id]}
-                    className="w-20"
-                  >
-                    Check In
-                  </Button>
-                )}
-              </TableCell>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Yard Management</h2>
+        <Button onClick={fetchGatepasses} disabled={loading}>
+          Refresh
+        </Button>
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Form #</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Carrier</TableHead>
+              <TableHead>Driver</TableHead>
+              <TableHead>BOL #</TableHead>
+              <TableHead>Pickup Door</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {gatepasses.map((gatepass) => (
+              <TableRow key={gatepass.id}>
+                <TableCell>{gatepass.formNumber}</TableCell>
+                <TableCell>{formatDate(gatepass.dateIn)}</TableCell>
+                <TableCell>{gatepass.carrier}</TableCell>
+                <TableCell>{gatepass.operatorName}</TableCell>
+                <TableCell>{gatepass.bolNumber || "-"}</TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Input
+                      value={pickupDoors[gatepass.id] || ""}
+                      onChange={(e) =>
+                        setPickupDoors((prev) => ({
+                          ...prev,
+                          [gatepass.id]: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter door"
+                      disabled={loading}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => assignPickupDoor(gatepass.id)}
+                      disabled={loading || !pickupDoors[gatepass.id]}
+                    >
+                      Assign
+                    </Button>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Select
+                    value={statuses[gatepass.id]}
+                    onValueChange={(value) =>
+                      handleStatusChange(gatepass.id, value as GatepassStatus)
+                    }
+                    disabled={loading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.values(GatepassStatus).map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status.toLowerCase().replace("_", " ")}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell>
+                  {gatepass.status === GatepassStatus.BOL_VERIFIED && (
+                    <Button
+                      onClick={() =>
+                        handleStatusChange(gatepass.id, GatepassStatus.IN_YARD)
+                      }
+                      size="sm"
+                      disabled={loading}
+                    >
+                      Check In
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

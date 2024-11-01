@@ -14,44 +14,37 @@ export function generateGatepassNumber(): string {
   return result;
 }
 
-export function formatDate(dateStr: string) {
-  // Ensure we're working with UTC time
-  const date = new Date(dateStr);
-  const utcDate = new Date(
-    Date.UTC(
-      date.getUTCFullYear(),
-      date.getUTCMonth(),
-      date.getUTCDate(),
-      date.getUTCHours(),
-      date.getUTCMinutes()
-    )
-  );
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return "";
 
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC",
-  }).format(utcDate);
+  try {
+    const d = typeof date === "string" ? new Date(date) : date;
+    if (isNaN(d.getTime())) return "";
+
+    // Use UTC methods to ensure consistent formatting between server and client
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "";
+  }
 }
 
-export function formatTime(timeStr: string) {
-  // Ensure we're working with UTC time
-  const date = new Date(timeStr);
-  const utcDate = new Date(
-    Date.UTC(
-      date.getUTCFullYear(),
-      date.getUTCMonth(),
-      date.getUTCDate(),
-      date.getUTCHours(),
-      date.getUTCMinutes()
-    )
-  );
+export function formatTime(date: string | Date | null | undefined): string {
+  if (!date) return "";
 
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "UTC",
-  }).format(utcDate);
+  try {
+    const d = typeof date === "string" ? new Date(date) : date;
+    if (isNaN(d.getTime())) return "";
+
+    // Use UTC methods to ensure consistent formatting between server and client
+    const hours = String(d.getUTCHours()).padStart(2, "0");
+    const minutes = String(d.getUTCMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+  } catch (error) {
+    console.error("Error formatting time:", error);
+    return "";
+  }
 }

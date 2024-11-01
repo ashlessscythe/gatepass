@@ -3,14 +3,23 @@ import { redirect } from "next/navigation";
 import { GatepassTable } from "@/components/gatepass/GatepassTable";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { GatepassTableData, GatepassTableItem } from "@/types/gatepass";
 
-async function getGatepasses() {
+async function getGatepasses(): Promise<GatepassTableData> {
   const gatepasses = await prisma.gatepass.findMany({
     take: 10,
     orderBy: {
       createdAt: "desc",
     },
-    include: {
+    select: {
+      id: true,
+      formNumber: true,
+      dateIn: true,
+      carrier: true,
+      truckNo: true,
+      operatorName: true,
+      status: true,
+      createdAt: true,
       createdBy: {
         select: {
           name: true,
@@ -21,18 +30,20 @@ async function getGatepasses() {
 
   const total = await prisma.gatepass.count();
 
+  const mappedGatepasses: GatepassTableItem[] = gatepasses.map((gatepass) => ({
+    id: gatepass.id,
+    formNumber: gatepass.formNumber,
+    dateIn: gatepass.dateIn.toISOString(),
+    carrier: gatepass.carrier,
+    truckNo: gatepass.truckNo,
+    operatorName: gatepass.operatorName,
+    status: gatepass.status,
+    createdBy: gatepass.createdBy,
+    createdAt: gatepass.createdAt.toISOString(),
+  }));
+
   return {
-    gatepasses: gatepasses.map((gatepass) => ({
-      id: gatepass.id,
-      formNumber: gatepass.formNumber,
-      dateIn: gatepass.dateIn.toISOString(),
-      carrier: gatepass.carrier,
-      truckNo: gatepass.truckNo,
-      operatorName: gatepass.operatorName,
-      status: gatepass.status,
-      createdBy: gatepass.createdBy,
-      createdAt: gatepass.createdAt.toISOString(),
-    })),
+    gatepasses: mappedGatepasses,
     total,
     pages: Math.ceil(total / 10),
   };
@@ -41,7 +52,7 @@ async function getGatepasses() {
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
+  if (!session?.user) {
     redirect("/login");
   }
 
@@ -54,7 +65,7 @@ export default async function DashboardPage() {
           Welcome, {session.user.name}
         </h1>
         <p className="text-muted-foreground">
-          You are logged in as a {session.user.role.toLowerCase()}
+          You are logged in as a {session.user.role?.toLowerCase()}
         </p>
       </div>
 

@@ -67,6 +67,7 @@ enum GatepassStatus {
   PENDING
   BOL_VERIFIED
   IN_YARD
+  CHECKED_IN
   LOADING
   COMPLETED
   CANCELLED
@@ -94,7 +95,7 @@ model Gatepass {
   operatorName     String        // Name of Operator
   passengerName    String?       // Name of Passenger
   purpose          Purpose
-  sealed           Boolean
+  sealed           Boolean       @default(false)
   sealNo1          String?       // Seal No. 1
   sealNo2          String?       // Seal No. 2
   remarks          String?       // Remarks
@@ -103,9 +104,9 @@ model Gatepass {
   trailerType      String?       // Trailer Type
   releaseTrailerNo String?       // Trailer No. (Release)
   destination      String?       // Destination
-  vehicleInspected Boolean       // Vehicle Inspected
+  vehicleInspected Boolean       @default(false) // Vehicle Inspected
   releaseSealNo    String?       // Seal No. (Release)
-  vestReturned     Boolean       // Vest Returned
+  vestReturned     Boolean       @default(false) // Vest Returned
   receiverSignature String?      @db.Text
   shipperSignature  String?      @db.Text
   securitySignature String?      @db.Text
@@ -113,6 +114,7 @@ model Gatepass {
   bolNumber        String?
   pickupDoor       String?
   yardCheckinTime  DateTime?
+  documentsTransferred Boolean    @default(false)
   createdById      String
   updatedById      String?
   createdAt        DateTime      @default(now())

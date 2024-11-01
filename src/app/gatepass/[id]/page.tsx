@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { GatepassPreview } from "@/components/gatepass/GatepassPreview";
 import { prisma } from "@/lib/prisma";
-import { GatepassData } from "@/types/gatepass";
+import type { Gatepass } from "@/types/gatepass";
 
 interface GatepassDetailPageProps {
   params: {
@@ -9,7 +9,7 @@ interface GatepassDetailPageProps {
   };
 }
 
-async function getGatepass(id: string): Promise<GatepassData | null> {
+async function getGatepass(id: string): Promise<Gatepass | null> {
   const gatepass = await prisma.gatepass.findUnique({
     where: { id },
     include: {
@@ -30,18 +30,7 @@ async function getGatepass(id: string): Promise<GatepassData | null> {
     return null;
   }
 
-  return {
-    ...gatepass,
-    dateIn: gatepass.dateIn.toISOString(),
-    timeIn: gatepass.timeIn.toISOString(),
-    dateOut: gatepass.dateOut?.toISOString() || null,
-    timeOut: gatepass.timeOut?.toISOString() || null,
-    createdAt: gatepass.createdAt.toISOString(),
-    updatedAt: gatepass.updatedAt.toISOString(),
-    bolNumber: gatepass.bolNumber || null,
-    pickupDoor: gatepass.pickupDoor || null,
-    yardCheckinTime: gatepass.yardCheckinTime?.toISOString() || null,
-  };
+  return gatepass;
 }
 
 export default async function GatepassDetailPage({

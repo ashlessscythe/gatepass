@@ -13,7 +13,7 @@ export async function GET() {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    if (session.user.role !== "GUARD") {
+    if (!["ADMIN", "GUARD"].includes(session.user.role)) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 

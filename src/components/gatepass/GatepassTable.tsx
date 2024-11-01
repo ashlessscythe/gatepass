@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { GatepassTableData, GatepassStatus } from "@/types";
-
-interface GatepassTableProps {
-  initialData: GatepassTableData;
-}
+import { GatepassTableProps } from "@/types/gatepass";
+import { GatepassStatus } from "@prisma/client";
+import { formatDate } from "@/lib/utils";
 
 export function GatepassTable({ initialData }: GatepassTableProps) {
   const router = useRouter();
@@ -55,6 +53,24 @@ export function GatepassTable({ initialData }: GatepassTableProps) {
     fetchData();
   };
 
+  const getStatusColor = (status: GatepassStatus) => {
+    switch (status) {
+      case GatepassStatus.COMPLETED:
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
+      case GatepassStatus.LOADING:
+      case GatepassStatus.IN_YARD:
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100";
+      case GatepassStatus.CANCELLED:
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100";
+    }
+  };
+
+  const formatStatus = (status: GatepassStatus) => {
+    return status.toLowerCase().replace(/_/g, " ");
+  };
+
   return (
     <div className="space-y-4">
       {/* Search and Filter Controls - Stack on mobile */}
@@ -75,12 +91,11 @@ export function GatepassTable({ initialData }: GatepassTableProps) {
             className="w-full sm:w-auto px-3 py-2 border rounded-md bg-background text-foreground"
           >
             <option value="ALL">All Status</option>
-            <option value="PENDING">Pending</option>
-            <option value="BOL_VERIFIED">BOL Verified</option>
-            <option value="IN_YARD">In Yard</option>
-            <option value="LOADING">Loading</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CANCELLED">Cancelled</option>
+            {Object.values(GatepassStatus).map((status) => (
+              <option key={status} value={status}>
+                {formatStatus(status)}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -120,7 +135,7 @@ export function GatepassTable({ initialData }: GatepassTableProps) {
                     {gatepass.formNumber || "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                    {new Date(gatepass.dateIn).toLocaleDateString()}
+                    {formatDate(gatepass.dateIn)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {gatepass.carrier}
@@ -133,19 +148,11 @@ export function GatepassTable({ initialData }: GatepassTableProps) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap
-                      ${
-                        gatepass.status === "COMPLETED"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-                          : gatepass.status === "LOADING" ||
-                            gatepass.status === "IN_YARD"
-                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100"
-                          : gatepass.status === "CANCELLED"
-                          ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
-                          : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
-                      }`}
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap ${getStatusColor(
+                        gatepass.status
+                      )}`}
                     >
-                      {gatepass.status.toLowerCase().replace("_", " ")}
+                      {formatStatus(gatepass.status)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">

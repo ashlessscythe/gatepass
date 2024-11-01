@@ -1,216 +1,146 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
 import { FormField } from "./FormField";
 import { FormSelect } from "./FormSelect";
 import { FormCheckbox } from "./FormCheckbox";
 import { FormSignature } from "./FormSignature";
-import { Toast } from "@/components/ui/toast";
+import { useToast } from "@/hooks/use-toast";
 import { GatepassPreview } from "@/components/gatepass/GatepassPreview";
-import type { GatepassData } from "@/types/gatepass";
-import { GatepassStatus } from "@prisma/client";
+import type { Gatepass } from "@/types/gatepass";
+import { GatepassStatus, Purpose } from "@prisma/client";
 import {
   GatepassFormValues,
   gatepassFormSchema,
   defaultValues,
 } from "@/lib/schemas/gatepass";
-import { ToastProvider } from "@radix-ui/react-toast";
+import { useRouter } from "next/navigation";
+
+interface GatepassFormProps {
+  onSuccess?: (data: Gatepass) => void;
+  initialData?: Partial<GatepassFormValues>;
+}
 
 const purposeOptions = [
-  { value: "PICKUP", label: "Pick up" },
-  { value: "SERVICE", label: "Service" },
-  { value: "DELIVER", label: "Deliver" },
-  { value: "OTHER", label: "Other" },
+  { value: Purpose.PICKUP, label: "Pick up" },
+  { value: Purpose.SERVICE, label: "Service" },
+  { value: Purpose.DELIVER, label: "Deliver" },
+  { value: Purpose.OTHER, label: "Other" },
 ];
 
-export function GatepassForm() {
+export function GatepassForm({ onSuccess, initialData }: GatepassFormProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [preview, setPreview] = useState(false);
-  const [previewData, setPreviewData] = useState<GatepassData | null>(null);
-  const [toast, setToast] = useState<{
-    message: string;
-    type: "foreground" | "background";
-  } | null>(null);
-
-  const methods = useForm<GatepassFormValues>({
+  const { toast } = useToast();
+  const form = useForm<GatepassFormValues>({
     resolver: zodResolver(gatepassFormSchema),
-    defaultValues,
+    defaultValues: {
+      ...defaultValues,
+      ...initialData,
+    },
   });
 
+  const { handleSubmit, watch, formState } = form;
+  const formData = watch();
+  const { isSubmitting } = formState;
+
   const onSubmit = async (data: GatepassFormValues) => {
-    if (preview) {
-      setPreview(false);
-      setPreviewData(null);
-      return;
-    }
-
     try {
-      setLoading(true);
-
-      // Include all form data including signatures
-      const payload = {
+      // Log form data before submission
+      console.log("[GatepassForm] Submitting form data:", {
         ...data,
-        receiverSignature: data.receiverSignature || null,
-        shipperSignature: data.shipperSignature || null,
-        securitySignature: data.securitySignature || null,
-      };
+        receiverSignature: data.receiverSignature
+          ? `${Math.round((data.receiverSignature as string).length / 1024)}KB`
+          : "null",
+        shipperSignature: data.shipperSignature
+          ? `${Math.round((data.shipperSignature as string).length / 1024)}KB`
+          : "null",
+        securitySignature: data.securitySignature
+          ? `${Math.round((data.securitySignature as string).length / 1024)}KB`
+          : "null",
+      });
 
       const response = await fetch("/api/gatepass", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...data,
+          sealNo1: data.sealNo1 || null,
+          sealNo2: data.sealNo2 || null,
+          remarks: data.remarks || null,
+          releaseRemarks: data.releaseRemarks || null,
+          trailerType: data.trailerType || null,
+          releaseTrailerNo: data.releaseTrailerNo || null,
+          destination: data.destination || null,
+          releaseSealNo: data.releaseSealNo || null,
+          trailerLicenseNo: data.trailerLicenseNo || null,
+          trailerNo: data.trailerNo || null,
+          passengerName: data.passengerName || null,
+          status: GatepassStatus.PENDING,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create gatepass");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create gatepass");
       }
 
-      setToast({
-        message: "Gatepass created successfully",
-        type: "foreground",
+      const gatepass = await response.json();
+      console.log("[GatepassForm] Gatepass created successfully:", gatepass.id);
+
+      toast({
+        title: "Success",
+        description: "Gatepass created successfully",
       });
 
-      setTimeout(() => {
-        router.push("/dashboard");
-        router.refresh();
-      }, 2000);
+      if (onSuccess) {
+        onSuccess(gatepass);
+      } else {
+        router.push(`/gatepass/${gatepass.id}`);
+      }
     } catch (error) {
-      console.error("Error creating gatepass:", error);
-      setToast({
-        message: "Failed to create gatepass. Please try again.",
-        type: "background",
+      console.error("[GatepassForm] Error creating gatepass:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to create gatepass",
+        variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
-
-  const handlePreview = async () => {
-    const isValid = await methods.trigger();
-    if (isValid) {
-      const formData = methods.getValues();
-      const now = new Date().toISOString();
-
-      const previewData: GatepassData = {
-        ...formData,
-        id: "preview",
-        formNumber: formData.formNumber || null,
-        status: GatepassStatus.PENDING,
-        createdBy: null,
-        updatedBy: null,
-        createdAt: now,
-        updatedAt: now,
-        bolNumber: null,
-        pickupDoor: null,
-        yardCheckinTime: null,
-        // Ensure all optional fields are properly nulled
-        dateOut: formData.dateOut || null,
-        timeOut: formData.timeOut || null,
-        trailerLicenseNo: formData.trailerLicenseNo || null,
-        trailerNo: formData.trailerNo || null,
-        passengerName: formData.passengerName || null,
-        sealNo1: formData.sealNo1 || null,
-        sealNo2: formData.sealNo2 || null,
-        remarks: formData.remarks || null,
-        releaseRemarks: formData.releaseRemarks || null,
-        trailerType: formData.trailerType || null,
-        releaseTrailerNo: formData.releaseTrailerNo || null,
-        destination: formData.destination || null,
-        releaseSealNo: formData.releaseSealNo || null,
-        receiverSignature: formData.receiverSignature || null,
-        shipperSignature: formData.shipperSignature || null,
-        securitySignature: formData.securitySignature || null,
-      };
-
-      setPreviewData(previewData);
-      setPreview(true);
-    }
-  };
-
-  if (preview && previewData) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-foreground">
-            Preview Gate Pass
-          </h2>
-          <button
-            onClick={() => {
-              setPreview(false);
-              setPreviewData(null);
-            }}
-            className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted"
-          >
-            Back to Edit
-          </button>
-        </div>
-        <GatepassPreview data={previewData} />
-        <div className="flex justify-end space-x-4">
-          <button
-            onClick={() => {
-              setPreview(false);
-              setPreviewData(null);
-            }}
-            className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted"
-          >
-            Edit
-          </button>
-          <button
-            onClick={methods.handleSubmit(onSubmit)}
-            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary border border-transparent rounded-md hover:bg-primary/90"
-          >
-            Confirm & Submit
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <>
-      <FormProvider {...methods}>
-        <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Form sections with updated theme classes */}
+    <FormProvider {...form}>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <div className="grid gap-8 md:grid-cols-2">
+          {/* Form Fields */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-foreground">
-              Basic Information
-            </h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {/* Form fields */}
-            </div>
-          </div>
-
-          {/* Vehicle Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Vehicle Information</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Basic Information</h3>
               <FormField
                 name="carrier"
                 label="Carrier"
-                required
                 placeholder="Enter carrier name"
+                required
               />
               <FormField
                 name="truckLicenseNo"
-                label="Truck License No."
-                required
+                label="License No. Truck"
                 placeholder="Enter truck license number"
+                required
               />
               <FormField
                 name="truckNo"
                 label="Truck No."
-                required
                 placeholder="Enter truck number"
+                required
               />
               <FormField
                 name="trailerLicenseNo"
-                label="Trailer License No."
+                label="License No. Trailer"
                 placeholder="Enter trailer license number"
               />
               <FormField
@@ -219,72 +149,59 @@ export function GatepassForm() {
                 placeholder="Enter trailer number"
               />
             </div>
-          </div>
 
-          {/* Personnel Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Personnel Information</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Personnel</h3>
               <FormField
                 name="operatorName"
-                label="Operator Name"
-                required
+                label="Name of Operator"
                 placeholder="Enter operator name"
+                required
               />
               <FormField
                 name="passengerName"
-                label="Passenger Name"
+                label="Name of Passenger"
                 placeholder="Enter passenger name"
               />
               <FormField
                 name="securityOfficer"
                 label="Security Officer"
-                required
                 placeholder="Enter security officer name"
+                required
               />
             </div>
-          </div>
 
-          {/* Purpose and Sealing */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Purpose and Sealing</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Purpose & Status</h3>
               <FormSelect
                 name="purpose"
                 label="Purpose"
                 options={purposeOptions}
                 required
               />
-              <div className="space-y-4">
-                <FormCheckbox name="sealed" label="Sealed" />
-                <FormField
-                  name="sealNo1"
-                  label="Seal No. 1"
-                  placeholder="Enter seal number"
-                />
-                <FormField
-                  name="sealNo2"
-                  label="Seal No. 2"
-                  placeholder="Enter secondary seal number"
-                />
-              </div>
-              <div className="col-span-2">
-                <FormField
-                  name="remarks"
-                  label="Remarks"
-                  placeholder="Enter any remarks"
-                />
-              </div>
+              <FormCheckbox name="sealed" label="Sealed" />
+              <FormField
+                name="sealNo1"
+                label="Seal No. 1"
+                placeholder="Enter seal number"
+              />
+              <FormField
+                name="sealNo2"
+                label="Seal No. 2"
+                placeholder="Enter secondary seal number"
+              />
+              <FormField
+                name="remarks"
+                label="Remarks"
+                placeholder="Enter remarks"
+              />
             </div>
-          </div>
 
-          {/* Release Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Release Information</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Release Information</h3>
               <FormField
                 name="releaseRemarks"
-                label="Release Remarks"
+                label="Release Pass Remarks"
                 placeholder="Enter release remarks"
               />
               <FormField
@@ -302,25 +219,17 @@ export function GatepassForm() {
                 label="Destination"
                 placeholder="Enter destination"
               />
+              <FormCheckbox name="vehicleInspected" label="Vehicle Inspected" />
               <FormField
                 name="releaseSealNo"
                 label="Release Seal No."
                 placeholder="Enter release seal number"
               />
-              <div className="space-y-4">
-                <FormCheckbox
-                  name="vehicleInspected"
-                  label="Vehicle Inspected"
-                />
-                <FormCheckbox name="vestReturned" label="Vest Returned" />
-              </div>
+              <FormCheckbox name="vestReturned" label="Vest Returned" />
             </div>
-          </div>
 
-          {/* Signatures */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Signatures</h3>
-            <div className="grid grid-cols-1 gap-8">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Signatures</h3>
               <FormSignature
                 name="receiverSignature"
                 label="Receiver's Signature"
@@ -336,36 +245,27 @@ export function GatepassForm() {
             </div>
           </div>
 
-          <div className="flex justify-end space-x-4">
-            <button
-              type="button"
-              onClick={() => methods.reset()}
-              disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted disabled:opacity-50"
-            >
-              Reset
-            </button>
-            <button
-              type="button"
-              onClick={handlePreview}
-              disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted disabled:opacity-50"
-            >
-              Preview
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary border border-transparent rounded-md hover:bg-primary/90 disabled:opacity-50"
-            >
-              {loading ? "Creating..." : "Submit"}
-            </button>
+          {/* Preview */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Preview</h3>
+            <GatepassPreview data={formData as any} />
           </div>
-        </form>
-      </FormProvider>
-      <ToastProvider>
-        {toast && <Toast title={toast.message} type={toast.type} />}
-      </ToastProvider>
-    </>
+        </div>
+
+        <div className="flex justify-end gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Creating..." : "Create Gatepass"}
+          </Button>
+        </div>
+      </form>
+    </FormProvider>
   );
 }
