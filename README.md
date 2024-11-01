@@ -76,8 +76,8 @@ A modern web application for digitizing truck gate management processes. Replace
 
    - `--gatepass-count` or `-g`: Number of gatepasses to generate (default: 10)
    - `--user-count` or `-u`: Number of additional users per role (default: 2)
-   - `--default-password` or `-p`: Password for generated users (default: "changeme123" or SEED_DEFAULT_PASSWORD env var)
-   - `--salt-rounds` or `-s`: Number of bcrypt salt rounds (default: 12)
+   - `--default-password` or `-p`: Plain text password that will be hashed before storage (default: "changeme123" or SEED_DEFAULT_PASSWORD env var)
+   - `--salt-rounds` or `-s`: Number of bcrypt salt rounds for password hashing (default: 12)
 
    The seed script will create:
 
@@ -85,11 +85,19 @@ A modern web application for digitizing truck gate management processes. Replace
    - Additional users per role based on --user-count
    - Random gatepasses with realistic data based on --gatepass-count
 
-   For security in production environments:
+   Password Security:
+
+   - Passwords provided via CLI or environment variables are never stored directly in the database
+   - Each password is hashed using bcrypt with the specified number of salt rounds
+   - Only the hashed version of the password is stored in the database
+   - Users can log in using the plain text password provided during seeding
+
+   Security Recommendations:
 
    - Set a strong password using SEED_DEFAULT_PASSWORD environment variable
    - Change default passwords after seeding
-   - Consider increasing salt rounds for stronger hashing
+   - Consider increasing salt rounds for stronger hashing (at the cost of seeding performance)
+   - Never commit .env files containing passwords to version control
 
 6. Start the development server:
    ```bash
@@ -103,23 +111,27 @@ The following test accounts are available after seeding:
 - **Admin**
 
   - Email: admin0@example.com
-  - Password: (specified by --default-password or SEED_DEFAULT_PASSWORD)
+  - Password: The plain text password specified by --default-password or SEED_DEFAULT_PASSWORD
+  - Note: The actual password stored in the database is a bcrypt hash of this value
 
 - **Security Guard**
 
   - Email: guard0@example.com
-  - Password: (specified by --default-password or SEED_DEFAULT_PASSWORD)
+  - Password: The plain text password specified by --default-password or SEED_DEFAULT_PASSWORD
+  - Note: The actual password stored in the database is a bcrypt hash of this value
 
 - **Dispatch Officer**
 
   - Email: dispatch0@example.com
-  - Password: (specified by --default-password or SEED_DEFAULT_PASSWORD)
+  - Password: The plain text password specified by --default-password or SEED_DEFAULT_PASSWORD
+  - Note: The actual password stored in the database is a bcrypt hash of this value
 
 - **Warehouse Manager**
   - Email: warehouse0@example.com
-  - Password: (specified by --default-password or SEED_DEFAULT_PASSWORD)
+  - Password: The plain text password specified by --default-password or SEED_DEFAULT_PASSWORD
+  - Note: The actual password stored in the database is a bcrypt hash of this value
 
-Additional users are created with incrementing numbers (e.g., admin1@example.com, guard1@example.com) based on the --user-count option.
+Additional users are created with incrementing numbers (e.g., admin1@example.com, guard1@example.com) based on the --user-count option. All users have their passwords hashed before storage.
 
 ## Project Structure
 
