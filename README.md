@@ -40,6 +40,14 @@ A modern web application for digitizing truck gate management processes. Replace
 - Comprehensive status management
 - Real-time status updates
 
+### Warehouse Interface
+
+- Document transfer management
+- Seal assignment and tracking
+- Digital signature capture for drivers
+- Pending documents overview
+- Real-time status updates
+
 ## Tech Stack
 
 - **Frontend:** Next.js 14 with TypeScript

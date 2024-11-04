@@ -64,10 +64,10 @@ GATEPASS WEB APP TODO LIST
         [x] Add yard management check-in
         [x] Handle pickup door assignments
         [x] Add status management system
-    [ ] Add Warehouse interface
-        [ ] Create document handling flow
-        [ ] Implement seal management
-        [ ] Add driver signature capture
+    [x] Add Warehouse interface
+        [x] Create document handling flow
+        [x] Implement seal management
+        [x] Add driver signature capture
     [ ] Add Admin interface
         [ ] User management
         [ ] System settings
