@@ -64,6 +64,8 @@ GATEPASS WEB APP TODO LIST
         [x] Add yard management check-in
         [x] Handle pickup door assignments
         [x] Add status management system
+        [x] Implement automatic data loading
+        [x] Add status validation and transitions
     [x] Add Warehouse interface
         [x] Create document handling flow
         [x] Implement seal management

@@ -64,13 +64,18 @@ enum Role {
 }
 
 enum GatepassStatus {
-  PENDING
-  BOL_VERIFIED
-  IN_YARD
-  CHECKED_IN
-  LOADING
-  COMPLETED
-  CANCELLED
+  PENDING           // Initial status when created by guard
+  BOL_VERIFIED      // BOL has been verified by dispatch
+  CHECKED_IN        // Driver has checked in at dispatch
+  IN_YARD           // Truck is in the yard
+  AT_DOOR           // Truck is at assigned door
+  LOADING           // Loading/unloading in progress
+  AWAITING_SEAL     // Waiting for seal assignment
+  AWAITING_DOCS     // Waiting for document transfer
+  DOCS_TRANSFERRED  // Documents have been transferred
+  COMPLETED         // Ready for exit verification
+  EXITED            // Truck has left the facility
+  CANCELLED         // Gatepass has been cancelled
 }
 
 enum Purpose {

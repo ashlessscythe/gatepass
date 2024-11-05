@@ -37,8 +37,13 @@ A modern web application for digitizing truck gate management processes. Replace
 - BOL verification system
 - Yard management with check-in functionality
 - Pickup door assignment
-- Comprehensive status management
+- Comprehensive status management:
+  - Sequential status transitions
+  - Automatic status updates based on actions
+  - Real-time validation
+  - Automatic data refresh
 - Real-time status updates
+- Automatic data loading and refresh capabilities
 
 ### Warehouse Interface
 
@@ -71,6 +76,7 @@ A modern web application for digitizing truck gate management processes. Replace
   - Real-time state management
   - Event-based drawing detection
 - **Mobile Support:** Responsive design with mobile-first approach
+- **State Management:** React hooks with optimized re-renders
 
 ## Getting Started
 

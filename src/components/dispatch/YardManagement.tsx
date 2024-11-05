@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { GatepassStatus } from "@prisma/client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Gatepass } from "@/types/gatepass";
 import { formatDate } from "@/lib/utils";
@@ -32,7 +32,7 @@ export function YardManagement() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const fetchGatepasses = async () => {
+  const fetchGatepasses = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/dispatch/verified-gatepasses");
@@ -59,74 +59,88 @@ export function YardManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const updateStatus = async (gatepassId: string, status: GatepassStatus) => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/dispatch/update-status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gatepassId, status }),
-      });
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchGatepasses();
+  }, [fetchGatepasses]);
 
-      if (!response.ok) throw new Error("Failed to update status");
+  const updateStatus = useCallback(
+    async (gatepassId: string, status: GatepassStatus) => {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/dispatch/update-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gatepassId, status }),
+        });
 
-      toast({
-        title: "Success",
-        description: "Status updated successfully",
-      });
+        if (!response.ok) throw new Error("Failed to update status");
 
-      // Update local state
-      setStatuses((prev) => ({ ...prev, [gatepassId]: status }));
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update status",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+        toast({
+          title: "Success",
+          description: "Status updated successfully",
+        });
 
-  const assignPickupDoor = async (gatepassId: string) => {
-    const door = pickupDoors[gatepassId];
-    if (!door) return;
+        // Update local state
+        setStatuses((prev) => ({ ...prev, [gatepassId]: status }));
+      } catch (error) {
+        console.error("Error updating status:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update status",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [toast]
+  );
 
-    try {
-      setLoading(true);
-      const response = await fetch("/api/dispatch/assign-door", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gatepassId, door }),
-      });
+  const assignPickupDoor = useCallback(
+    async (gatepassId: string) => {
+      const door = pickupDoors[gatepassId];
+      if (!door) return;
 
-      if (!response.ok) throw new Error("Failed to assign door");
+      try {
+        setLoading(true);
+        const response = await fetch("/api/dispatch/assign-door", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gatepassId, door }),
+        });
 
-      toast({
-        title: "Success",
-        description: "Pickup door assigned successfully",
-      });
+        if (!response.ok) throw new Error("Failed to assign door");
 
-      // Update status to IN_YARD after assigning door
-      await updateStatus(gatepassId, GatepassStatus.IN_YARD);
-    } catch (error) {
-      console.error("Error assigning door:", error);
-      toast({
-        title: "Error",
-        description: "Failed to assign pickup door",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+        toast({
+          title: "Success",
+          description: "Pickup door assigned successfully",
+        });
 
-  const handleStatusChange = async (id: string, value: GatepassStatus) => {
-    await updateStatus(id, value);
-  };
+        // Update status to IN_YARD after assigning door
+        await updateStatus(gatepassId, GatepassStatus.IN_YARD);
+      } catch (error) {
+        console.error("Error assigning door:", error);
+        toast({
+          title: "Error",
+          description: "Failed to assign pickup door",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [pickupDoors, toast, updateStatus]
+  );
+
+  const handleStatusChange = useCallback(
+    async (id: string, value: GatepassStatus) => {
+      await updateStatus(id, value);
+    },
+    [updateStatus]
+  );
 
   return (
     <div className="space-y-4">
