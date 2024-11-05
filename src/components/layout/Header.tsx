@@ -29,12 +29,17 @@ export function Header() {
           <ThemeToggle />
           {session ? (
             <>
-              <span className="text-sm text-muted-foreground">
-                {session.user?.name}
-              </span>
+              <div className="flex flex-col items-end">
+                <span className="text-sm font-medium text-foreground">
+                  {session.user?.name}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {session.user?.role?.toLowerCase()}
+                </span>
+              </div>
               <button
                 onClick={() => signOut()}
-                className="text-sm font-medium text-foreground/60 hover:text-foreground/80"
+                className="px-3 py-1.5 text-sm font-medium text-foreground/60 hover:text-foreground hover:bg-muted rounded-md transition-colors"
               >
                 Sign out
               </button>
@@ -42,7 +47,7 @@ export function Header() {
           ) : (
             <Link
               href="/login"
-              className="text-sm font-medium text-foreground/60 hover:text-foreground/80"
+              className="px-3 py-1.5 text-sm font-medium text-foreground/60 hover:text-foreground hover:bg-muted rounded-md transition-colors"
             >
               Sign in
             </Link>
