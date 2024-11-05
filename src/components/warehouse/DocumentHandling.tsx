@@ -16,7 +16,7 @@ export default function DocumentHandling() {
   );
   const [selectedGatepass, setSelectedGatepass] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [driverSignature, setDriverSignature] = useState<string | null>(null);
+  const [shipperSignature, setShipperSignature] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Memoize fetchPendingDocuments to prevent unnecessary re-creations
@@ -41,7 +41,7 @@ export default function DocumentHandling() {
   }, [fetchPendingDocuments]);
 
   const handleDocumentTransfer = useCallback(async () => {
-    if (!selectedGatepass || !driverSignature) {
+    if (!selectedGatepass || !shipperSignature) {
       toast({
         title: "Error",
         description: "Driver signature is required",
@@ -58,7 +58,7 @@ export default function DocumentHandling() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           gatepassId: selectedGatepass,
-          signature: driverSignature,
+          signature: shipperSignature,
         } as SignatureUpdateData),
       });
 
@@ -81,7 +81,7 @@ export default function DocumentHandling() {
       });
 
       // Reset form and refresh list
-      setDriverSignature(null);
+      setShipperSignature(null);
       setSelectedGatepass(null);
       await fetchPendingDocuments();
     } catch (error) {
@@ -94,10 +94,10 @@ export default function DocumentHandling() {
     } finally {
       setLoading(false);
     }
-  }, [selectedGatepass, driverSignature, toast, fetchPendingDocuments]);
+  }, [selectedGatepass, shipperSignature, toast, fetchPendingDocuments]);
 
   const handleSignatureChange = useCallback((dataUrl: string | null) => {
-    setDriverSignature(dataUrl);
+    setShipperSignature(dataUrl);
   }, []);
 
   return (
@@ -157,7 +157,7 @@ export default function DocumentHandling() {
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Drivers signature is required to confirm document receipt
+                  Shipper signature is required to confirm document transfer
                 </p>
                 <SignaturePad onChange={handleSignatureChange} required />
               </div>
@@ -165,7 +165,7 @@ export default function DocumentHandling() {
                 className="w-full"
                 size="sm"
                 onClick={handleDocumentTransfer}
-                disabled={loading || !driverSignature}
+                disabled={loading || !shipperSignature}
               >
                 {loading ? "Processing..." : "Mark Documents Transferred"}
               </Button>
