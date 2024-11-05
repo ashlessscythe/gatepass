@@ -58,6 +58,9 @@ GATEPASS WEB APP TODO LIST
         [x] Implement initial entry form
         [x] Show recent entries list
         [x] Add workflow instructions
+        [x] Show all gatepasses across guards
+        [x] Add creator tracking and display
+        [x] Improve gatepass list information
     [x] Create Dispatch interface
         [x] Add dispatch dashboard
         [x] Implement BOL verification

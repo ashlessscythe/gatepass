@@ -28,9 +28,14 @@ A modern web application for digitizing truck gate management processes. Replace
 ### Guard Interface
 
 - Quick entry form for arriving trucks
-- Recent entries list for reference
+- Comprehensive gatepass list:
+  - View all recent gatepasses
+  - Track gatepass creators
+  - Real-time status updates
+  - Detailed timestamps
 - Clear workflow instructions
 - Initial driver and truck information capture
+- Automatic data refresh
 
 ### Dispatch Interface
 

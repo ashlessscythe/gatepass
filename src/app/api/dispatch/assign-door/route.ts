@@ -14,16 +14,41 @@ export async function POST(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { gatepassId, doorNumber } = await request.json();
+    const { gatepassId, door } = await request.json();
 
-    if (!gatepassId || !doorNumber) {
-      return new NextResponse("Missing required fields", { status: 400 });
+    if (!gatepassId || !door) {
+      return new NextResponse(
+        "Missing required fields: gatepassId and door are required",
+        { status: 400 }
+      );
     }
 
+    // Get current gatepass to check status
+    const currentGatepass = await prisma.gatepass.findUnique({
+      where: { id: gatepassId },
+    });
+
+    if (!currentGatepass) {
+      return new NextResponse("Gatepass not found", { status: 404 });
+    }
+
+    // Validate status
+    if (
+      currentGatepass.status !== GatepassStatus.BOL_VERIFIED &&
+      currentGatepass.status !== GatepassStatus.CHECKED_IN
+    ) {
+      return new NextResponse(
+        "Invalid status: Truck must be checked in before assigning a door",
+        { status: 400 }
+      );
+    }
+
+    // Update gatepass with door assignment and status
     const updatedGatepass = await prisma.gatepass.update({
       where: { id: gatepassId },
       data: {
-        pickupDoor: doorNumber,
+        pickupDoor: door,
+        status: GatepassStatus.AT_DOOR,
         updatedById: session.user.id,
       },
     });
@@ -31,6 +56,9 @@ export async function POST(request: Request) {
     return NextResponse.json(updatedGatepass);
   } catch (error) {
     console.error("Error assigning door:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return new NextResponse(
+      error instanceof Error ? error.message : "Internal Server Error",
+      { status: 500 }
+    );
   }
 }

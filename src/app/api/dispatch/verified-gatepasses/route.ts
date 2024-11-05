@@ -16,13 +16,33 @@ export async function GET() {
 
     const verifiedGatepasses = await prisma.gatepass.findMany({
       where: {
-        OR: [
-          { status: GatepassStatus.BOL_VERIFIED },
-          { status: GatepassStatus.IN_YARD },
-        ],
+        // Only include active gatepasses
+        NOT: {
+          status: {
+            in: [
+              GatepassStatus.PENDING,
+              GatepassStatus.CANCELLED,
+              GatepassStatus.EXITED,
+            ],
+          },
+        },
       },
-      orderBy: {
-        dateIn: "desc",
+      orderBy: [
+        // Sort by date for consistent ordering
+        { dateIn: "desc" },
+      ],
+      // Include all fields needed for display and logic
+      select: {
+        id: true,
+        formNumber: true,
+        dateIn: true,
+        carrier: true,
+        operatorName: true,
+        bolNumber: true,
+        pickupDoor: true,
+        status: true,
+        sealed: true,
+        documentsTransferred: true,
       },
     });
 

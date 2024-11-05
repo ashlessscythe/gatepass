@@ -60,15 +60,23 @@ export function GatepassList({ initialData }: GatepassListProps) {
                         : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
                     }`}
                   >
-                    {gatepass.status.toLowerCase().replace("_", " ")}
+                    {gatepass.status.toLowerCase().replace(/_/g, " ")}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   {gatepass.carrier} - {gatepass.operatorName}
                 </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Created by: {gatepass.createdBy?.name || "Unknown"}
+                </p>
               </div>
-              <div className="text-sm text-muted-foreground">
-                {formatDate(gatepass.dateIn)} {formatTime(gatepass.timeIn)}
+              <div className="text-right">
+                <div className="text-sm text-muted-foreground">
+                  {formatDate(gatepass.dateIn)} {formatTime(gatepass.timeIn)}
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  Created: {formatDate(gatepass.createdAt)}
+                </div>
               </div>
             </div>
 

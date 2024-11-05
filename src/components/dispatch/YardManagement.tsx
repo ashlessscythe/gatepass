@@ -18,10 +18,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { GatepassStatus } from "@prisma/client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Gatepass } from "@/types/gatepass";
 import { formatDate } from "@/lib/utils";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 export function YardManagement() {
   const [gatepasses, setGatepasses] = useState<Gatepass[]>([]);
@@ -31,6 +32,36 @@ export function YardManagement() {
   );
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  // Split gatepasses into pending and handled
+  const { pendingGatepasses, handledGatepasses } = useMemo(() => {
+    const pending = gatepasses.filter(
+      (gatepass) =>
+        // Only show BOL_VERIFIED and CHECKED_IN in pending
+        (gatepass.status === GatepassStatus.BOL_VERIFIED ||
+          gatepass.status === GatepassStatus.CHECKED_IN) &&
+        // And only if they don't have a door assigned
+        !gatepass.pickupDoor
+    );
+
+    const handled = gatepasses.filter(
+      (gatepass) =>
+        // Show all gatepasses that have a door assigned
+        gatepass.pickupDoor ||
+        // Or are in a status after door assignment
+        gatepass.status === GatepassStatus.AT_DOOR ||
+        gatepass.status === GatepassStatus.LOADING ||
+        gatepass.status === GatepassStatus.AWAITING_SEAL ||
+        gatepass.status === GatepassStatus.AWAITING_DOCS ||
+        gatepass.status === GatepassStatus.DOCS_TRANSFERRED ||
+        gatepass.status === GatepassStatus.COMPLETED
+    );
+
+    return {
+      pendingGatepasses: pending.sort((a, b) => (a.dateIn > b.dateIn ? -1 : 1)),
+      handledGatepasses: handled.sort((a, b) => (a.dateIn > b.dateIn ? -1 : 1)),
+    };
+  }, [gatepasses]);
 
   const fetchGatepasses = useCallback(async () => {
     try {
@@ -61,22 +92,36 @@ export function YardManagement() {
     }
   }, [toast]);
 
-  // Fetch data on component mount
   useEffect(() => {
     fetchGatepasses();
   }, [fetchGatepasses]);
 
   const updateStatus = useCallback(
     async (gatepassId: string, status: GatepassStatus) => {
+      if (!gatepassId || !status) {
+        toast({
+          title: "Error",
+          description: "Missing required fields for status update",
+          variant: "destructive",
+        });
+        return;
+      }
+
       try {
         setLoading(true);
         const response = await fetch("/api/dispatch/update-status", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ gatepassId, status }),
+          body: JSON.stringify({
+            gatepassId,
+            status,
+          }),
         });
 
-        if (!response.ok) throw new Error("Failed to update status");
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(error || "Failed to update status");
+        }
 
         toast({
           title: "Success",
@@ -85,54 +130,107 @@ export function YardManagement() {
 
         // Update local state
         setStatuses((prev) => ({ ...prev, [gatepassId]: status }));
+
+        // Refresh to get latest data
+        await fetchGatepasses();
       } catch (error) {
         console.error("Error updating status:", error);
         toast({
           title: "Error",
-          description: "Failed to update status",
+          description:
+            error instanceof Error ? error.message : "Failed to update status",
           variant: "destructive",
         });
       } finally {
         setLoading(false);
       }
     },
-    [toast]
+    [toast, fetchGatepasses]
   );
 
   const assignPickupDoor = useCallback(
     async (gatepassId: string) => {
       const door = pickupDoors[gatepassId];
-      if (!door) return;
+      if (!door) {
+        toast({
+          title: "Error",
+          description: "Please enter a door number",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!gatepassId) {
+        toast({
+          title: "Error",
+          description: "Missing gatepass ID",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const gatepass = gatepasses.find((g) => g.id === gatepassId);
+      if (!gatepass) {
+        toast({
+          title: "Error",
+          description: "Gatepass not found",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate status requirements
+      if (
+        gatepass.status !== GatepassStatus.BOL_VERIFIED &&
+        gatepass.status !== GatepassStatus.CHECKED_IN
+      ) {
+        toast({
+          title: "Error",
+          description:
+            "Truck must be checked in before assigning a door. Please verify BOL and check in the truck first.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       try {
         setLoading(true);
         const response = await fetch("/api/dispatch/assign-door", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ gatepassId, door }),
+          body: JSON.stringify({
+            gatepassId,
+            door,
+          }),
         });
 
-        if (!response.ok) throw new Error("Failed to assign door");
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(error || "Failed to assign door");
+        }
 
         toast({
           title: "Success",
           description: "Pickup door assigned successfully",
         });
 
-        // Update status to IN_YARD after assigning door
-        await updateStatus(gatepassId, GatepassStatus.IN_YARD);
+        // Refresh the list to get updated data
+        await fetchGatepasses();
       } catch (error) {
         console.error("Error assigning door:", error);
         toast({
           title: "Error",
-          description: "Failed to assign pickup door",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Failed to assign pickup door. Please ensure the truck is checked in and try again.",
           variant: "destructive",
         });
       } finally {
         setLoading(false);
       }
     },
-    [pickupDoors, toast, updateStatus]
+    [pickupDoors, gatepasses, toast, fetchGatepasses]
   );
 
   const handleStatusChange = useCallback(
@@ -142,8 +240,118 @@ export function YardManagement() {
     [updateStatus]
   );
 
+  const canAssignDoor = useCallback((status: GatepassStatus) => {
+    return (
+      status === GatepassStatus.BOL_VERIFIED ||
+      status === GatepassStatus.CHECKED_IN
+    );
+  }, []);
+
+  const renderGatepassTable = (
+    gatepasses: Gatepass[],
+    showDoorAssignment: boolean = true
+  ) => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Form #</TableHead>
+          <TableHead>Date</TableHead>
+          <TableHead>Carrier</TableHead>
+          <TableHead>Driver</TableHead>
+          <TableHead>BOL #</TableHead>
+          <TableHead>Pickup Door</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {gatepasses.map((gatepass) => (
+          <TableRow key={gatepass.id}>
+            <TableCell>{gatepass.formNumber}</TableCell>
+            <TableCell>{formatDate(gatepass.dateIn)}</TableCell>
+            <TableCell>{gatepass.carrier}</TableCell>
+            <TableCell>{gatepass.operatorName}</TableCell>
+            <TableCell>{gatepass.bolNumber || "-"}</TableCell>
+            <TableCell>
+              {showDoorAssignment ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={pickupDoors[gatepass.id] || ""}
+                    onChange={(e) =>
+                      setPickupDoors((prev) => ({
+                        ...prev,
+                        [gatepass.id]: e.target.value,
+                      }))
+                    }
+                    placeholder={
+                      canAssignDoor(gatepass.status)
+                        ? "Enter door"
+                        : "Check in truck first"
+                    }
+                    disabled={loading || !canAssignDoor(gatepass.status)}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => assignPickupDoor(gatepass.id)}
+                    disabled={
+                      loading ||
+                      !pickupDoors[gatepass.id] ||
+                      !canAssignDoor(gatepass.status)
+                    }
+                    title={
+                      !canAssignDoor(gatepass.status)
+                        ? "Truck must be checked in before assigning a door"
+                        : ""
+                    }
+                  >
+                    Assign
+                  </Button>
+                </div>
+              ) : (
+                gatepass.pickupDoor
+              )}
+            </TableCell>
+            <TableCell>
+              <Select
+                value={statuses[gatepass.id]}
+                onValueChange={(value) =>
+                  handleStatusChange(gatepass.id, value as GatepassStatus)
+                }
+                disabled={loading}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(GatepassStatus).map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status.toLowerCase().replace(/_/g, " ")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </TableCell>
+            <TableCell>
+              {gatepass.status === GatepassStatus.BOL_VERIFIED && (
+                <Button
+                  onClick={() =>
+                    handleStatusChange(gatepass.id, GatepassStatus.CHECKED_IN)
+                  }
+                  size="sm"
+                  disabled={loading}
+                >
+                  Check In
+                </Button>
+              )}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Yard Management</h2>
         <Button onClick={fetchGatepasses} disabled={loading}>
@@ -151,88 +359,29 @@ export function YardManagement() {
         </Button>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Form #</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Carrier</TableHead>
-              <TableHead>Driver</TableHead>
-              <TableHead>BOL #</TableHead>
-              <TableHead>Pickup Door</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {gatepasses.map((gatepass) => (
-              <TableRow key={gatepass.id}>
-                <TableCell>{gatepass.formNumber}</TableCell>
-                <TableCell>{formatDate(gatepass.dateIn)}</TableCell>
-                <TableCell>{gatepass.carrier}</TableCell>
-                <TableCell>{gatepass.operatorName}</TableCell>
-                <TableCell>{gatepass.bolNumber || "-"}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Input
-                      value={pickupDoors[gatepass.id] || ""}
-                      onChange={(e) =>
-                        setPickupDoors((prev) => ({
-                          ...prev,
-                          [gatepass.id]: e.target.value,
-                        }))
-                      }
-                      placeholder="Enter door"
-                      disabled={loading}
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => assignPickupDoor(gatepass.id)}
-                      disabled={loading || !pickupDoors[gatepass.id]}
-                    >
-                      Assign
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Select
-                    value={statuses[gatepass.id]}
-                    onValueChange={(value) =>
-                      handleStatusChange(gatepass.id, value as GatepassStatus)
-                    }
-                    disabled={loading}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.values(GatepassStatus).map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status.toLowerCase().replace("_", " ")}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  {gatepass.status === GatepassStatus.BOL_VERIFIED && (
-                    <Button
-                      onClick={() =>
-                        handleStatusChange(gatepass.id, GatepassStatus.IN_YARD)
-                      }
-                      size="sm"
-                      disabled={loading}
-                    >
-                      Check In
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Pending Door Assignment ({pendingGatepasses.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            {renderGatepassTable(pendingGatepasses)}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Handled Trucks ({handledGatepasses.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            {renderGatepassTable(handledGatepasses, false)}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

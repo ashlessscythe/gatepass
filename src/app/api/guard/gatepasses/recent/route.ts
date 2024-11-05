@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { GatepassStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,10 @@ export async function GET() {
 
     const gatepasses = await prisma.gatepass.findMany({
       where: {
-        createdById: session.user.id,
+        // Only show active gatepasses
+        NOT: {
+          status: GatepassStatus.CANCELLED,
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -33,7 +37,7 @@ export async function GET() {
           },
         },
       },
-      take: 10,
+      take: 20, // Show more gatepasses since we're showing all guards' entries
     });
 
     console.log(
