@@ -47,6 +47,8 @@ export interface PendingDocument {
   operatorName: string;
   status: GatepassStatus;
   createdAt: string;
+  sealed: boolean;
+  documentsTransferred: boolean;
 }
 
 export interface SealAssignmentData {

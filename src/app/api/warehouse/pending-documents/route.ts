@@ -2,12 +2,16 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { GatepassStatus } from "@prisma/client";
+import { authOptions } from "@/lib/auth";
 import type { PendingDocument } from "@/types/gatepass";
 
 export async function GET() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
 
-  if (!session) {
+  if (
+    !session ||
+    (session.user.role !== "WAREHOUSE" && session.user.role !== "ADMIN")
+  ) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
@@ -16,10 +20,25 @@ export async function GET() {
     const documents = await prisma.gatepass.findMany({
       where: {
         OR: [
-          { status: GatepassStatus.BOL_VERIFIED },
-          { status: GatepassStatus.IN_YARD },
+          // Include gatepasses specifically awaiting documents
+          { status: GatepassStatus.AWAITING_DOCS },
+          // Also include those that are in earlier stages but might need documents
+          {
+            AND: [
+              {
+                status: {
+                  in: [
+                    GatepassStatus.BOL_VERIFIED,
+                    GatepassStatus.IN_YARD,
+                    GatepassStatus.AT_DOOR,
+                    GatepassStatus.LOADING,
+                  ],
+                },
+              },
+              { documentsTransferred: false },
+            ],
+          },
         ],
-        documentsTransferred: false,
       },
       select: {
         id: true,
@@ -28,6 +47,11 @@ export async function GET() {
         operatorName: true,
         status: true,
         createdAt: true,
+        sealed: true,
+        documentsTransferred: true,
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
@@ -39,6 +63,8 @@ export async function GET() {
       operatorName: doc.operatorName,
       status: doc.status,
       createdAt: doc.createdAt.toISOString(),
+      sealed: doc.sealed,
+      documentsTransferred: doc.documentsTransferred,
     }));
 
     return NextResponse.json(pendingDocuments);

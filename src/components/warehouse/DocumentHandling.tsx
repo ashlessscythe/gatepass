@@ -9,6 +9,7 @@ import type {
   SignatureUpdateData,
 } from "@/types/gatepass";
 import { SignaturePad } from "@/components/signature/SignaturePad";
+import { GatepassStatus } from "@prisma/client";
 
 export default function DocumentHandling() {
   const [pendingDocuments, setPendingDocuments] = useState<PendingDocument[]>(
@@ -100,6 +101,21 @@ export default function DocumentHandling() {
     setShipperSignature(dataUrl);
   }, []);
 
+  const getStatusBadgeColor = (status: GatepassStatus) => {
+    switch (status) {
+      case GatepassStatus.AWAITING_DOCS:
+        return "bg-yellow-100 text-yellow-800";
+      case GatepassStatus.DOCS_TRANSFERRED:
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const formatStatus = (status: GatepassStatus) => {
+    return status.toLowerCase().replace(/_/g, " ");
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -140,6 +156,25 @@ export default function DocumentHandling() {
                       <p className="text-sm text-muted-foreground">
                         {doc.carrier} - {doc.operatorName}
                       </p>
+                      <div className="flex gap-2 mt-1">
+                        <span
+                          className={`text-xs px-2 py-1 rounded ${getStatusBadgeColor(
+                            doc.status
+                          )}`}
+                        >
+                          {formatStatus(doc.status)}
+                        </span>
+                        {doc.sealed && (
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            Sealed
+                          </span>
+                        )}
+                        {doc.documentsTransferred && (
+                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            Docs Transferred
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {new Date(doc.createdAt).toLocaleDateString()}
