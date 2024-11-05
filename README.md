@@ -48,6 +48,17 @@ A modern web application for digitizing truck gate management processes. Replace
 - Pending documents overview
 - Real-time status updates
 
+### Admin Interface
+
+- User Management:
+  - Create, edit, and delete user accounts
+  - Role assignment and management
+  - User activity tracking
+- System Settings:
+  - Configure system-wide preferences
+  - Manage default settings
+  - Control system behavior
+
 ## Tech Stack
 
 - **Frontend:** Next.js 14 with TypeScript

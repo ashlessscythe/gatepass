@@ -1,6 +1,9 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserManagement } from "@/components/admin/UserManagement";
+import { SystemSettings } from "@/components/admin/SystemSettings";
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
@@ -20,28 +23,18 @@ export default async function AdminPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-          <h3 className="font-semibold">User Management</h3>
-          <p className="text-sm text-muted-foreground mt-2">
-            Add, edit, or remove user accounts
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-          <h3 className="font-semibold">System Logs</h3>
-          <p className="text-sm text-muted-foreground mt-2">
-            View system activity and audit logs
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-          <h3 className="font-semibold">Settings</h3>
-          <p className="text-sm text-muted-foreground mt-2">
-            Configure system settings and preferences
-          </p>
-        </div>
-      </div>
+      <Tabs defaultValue="users" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsTrigger value="settings">System Settings</TabsTrigger>
+        </TabsList>
+        <TabsContent value="users" className="space-y-4">
+          <UserManagement />
+        </TabsContent>
+        <TabsContent value="settings" className="space-y-4">
+          <SystemSettings />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -68,9 +68,9 @@ GATEPASS WEB APP TODO LIST
         [x] Create document handling flow
         [x] Implement seal management
         [x] Add driver signature capture
-    [ ] Add Admin interface
-        [ ] User management
-        [ ] System settings
+    [x] Add Admin interface
+        [x] User management
+        [x] System settings
     [ ] Create Exit Verification
         [ ] Add final checks by guard
         [ ] Implement truck sealing
