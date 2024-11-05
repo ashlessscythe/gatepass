@@ -11,8 +11,8 @@ const argv = yargs(hideBin(process.argv))
   .option("gatepass-count", {
     alias: "g",
     type: "number",
-    description: "Number of gatepasses to generate",
-    default: 10,
+    description: "Number of gatepasses to generate per status",
+    default: 3,
   })
   .option("user-count", {
     alias: "u",
@@ -31,30 +31,24 @@ const argv = yargs(hideBin(process.argv))
     type: "number",
     description: "Number of salt rounds for password hashing",
     default: 12,
+  })
+  .option("clear", {
+    type: "boolean",
+    description: "Clear existing data before seeding",
+    default: false,
   }).argv;
 
-const generateRandomGatepass = (users: any[]) => {
+const generateGatepassForStatus = (users: any[], status: GatepassStatus) => {
   const createdBy = users[Math.floor(Math.random() * users.length)];
-  const updatedBy =
-    Math.random() > 0.5
-      ? users[Math.floor(Math.random() * users.length)]
-      : null;
-  const status = faker.helpers.arrayElement(Object.values(GatepassStatus));
+  const updatedBy = users[Math.floor(Math.random() * users.length)];
   const purpose = faker.helpers.arrayElement(Object.values(Purpose));
-  const sealed = faker.datatype.boolean();
+  const dateIn = faker.date.recent({ days: 30 });
 
-  return {
+  // Base gatepass data
+  const baseData = {
     formNumber: `GP${faker.number.int({ min: 1000, max: 9999 })}`,
-    dateIn: faker.date.recent({ days: 30 }),
-    timeIn: faker.date.recent({ days: 30 }),
-    dateOut:
-      status === GatepassStatus.COMPLETED
-        ? faker.date.recent({ days: 1 })
-        : null,
-    timeOut:
-      status === GatepassStatus.COMPLETED
-        ? faker.date.recent({ days: 1 })
-        : null,
+    dateIn,
+    timeIn: dateIn,
     carrier: faker.company.name(),
     truckLicenseNo: faker.string.alphanumeric(6).toUpperCase(),
     truckNo: `T${faker.number.int({ min: 100, max: 999 })}`,
@@ -63,79 +57,172 @@ const generateRandomGatepass = (users: any[]) => {
     operatorName: faker.person.fullName(),
     passengerName: Math.random() > 0.7 ? faker.person.fullName() : null,
     purpose,
-    sealed,
-    sealNo1: sealed ? faker.string.alphanumeric(8).toUpperCase() : null,
-    sealNo2:
-      sealed && Math.random() > 0.8
-        ? faker.string.alphanumeric(8).toUpperCase()
-        : null,
     remarks: Math.random() > 0.7 ? faker.lorem.sentence() : null,
     securityOfficer: faker.person.fullName(),
-    releaseRemarks:
-      status === GatepassStatus.COMPLETED ? faker.lorem.sentence() : null,
     trailerType: faker.helpers.arrayElement([
       "Box",
       "Flatbed",
       "Refrigerated",
       "Container",
     ]),
-    releaseTrailerNo:
-      status === GatepassStatus.COMPLETED
-        ? `RTR${faker.number.int({ min: 100, max: 999 })}`
-        : null,
     destination: faker.location.city(),
     vehicleInspected: faker.datatype.boolean(),
-    releaseSealNo:
-      status === GatepassStatus.COMPLETED
-        ? faker.string.alphanumeric(8).toUpperCase()
-        : null,
-    vestReturned:
-      status === GatepassStatus.COMPLETED ? true : faker.datatype.boolean(),
-    receiverSignature:
-      status === GatepassStatus.COMPLETED
-        ? faker.string.alphanumeric(64)
-        : null,
-    shipperSignature:
-      status === GatepassStatus.COMPLETED
-        ? faker.string.alphanumeric(64)
-        : null,
-    securitySignature:
-      status === GatepassStatus.COMPLETED
-        ? faker.string.alphanumeric(64)
-        : null,
+    vestReturned: false,
     status,
-    bolNumber:
-      status !== GatepassStatus.PENDING
-        ? `BOL${faker.number.int({ min: 10000, max: 99999 })}`
-        : null,
-    pickupDoor:
-      status === GatepassStatus.IN_YARD
-        ? faker.number.int({ min: 1, max: 50 }).toString()
-        : null,
-    yardCheckinTime:
-      status === GatepassStatus.IN_YARD ? faker.date.recent({ days: 1 }) : null,
-    createdBy: {
-      connect: {
-        id: createdBy.id,
-      },
-    },
-    updatedBy: updatedBy
-      ? {
-          connect: {
-            id: updatedBy.id,
-          },
-        }
-      : undefined,
+    createdBy: { connect: { id: createdBy.id } },
+    updatedBy: { connect: { id: updatedBy.id } },
   };
+
+  // Add status-specific data
+  switch (status) {
+    case GatepassStatus.PENDING:
+      return baseData;
+
+    case GatepassStatus.BOL_VERIFIED:
+      return {
+        ...baseData,
+        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
+      };
+
+    case GatepassStatus.CHECKED_IN:
+      return {
+        ...baseData,
+        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
+      };
+
+    case GatepassStatus.IN_YARD:
+      return {
+        ...baseData,
+        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
+        yardCheckinTime: faker.date.recent({ days: 1 }),
+      };
+
+    case GatepassStatus.AT_DOOR:
+      return {
+        ...baseData,
+        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
+        yardCheckinTime: faker.date.recent({ days: 1 }),
+        pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
+      };
+
+    case GatepassStatus.LOADING:
+      return {
+        ...baseData,
+        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
+        yardCheckinTime: faker.date.recent({ days: 1 }),
+        pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
+      };
+
+    case GatepassStatus.AWAITING_SEAL:
+      return {
+        ...baseData,
+        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
+        yardCheckinTime: faker.date.recent({ days: 1 }),
+        pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
+      };
+
+    case GatepassStatus.AWAITING_DOCS:
+      return {
+        ...baseData,
+        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
+        yardCheckinTime: faker.date.recent({ days: 1 }),
+        pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
+        sealed: true,
+        sealNo1: faker.string.alphanumeric(8).toUpperCase(),
+        sealNo2:
+          Math.random() > 0.8
+            ? faker.string.alphanumeric(8).toUpperCase()
+            : null,
+      };
+
+    case GatepassStatus.DOCS_TRANSFERRED:
+      return {
+        ...baseData,
+        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
+        yardCheckinTime: faker.date.recent({ days: 1 }),
+        pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
+        sealed: true,
+        sealNo1: faker.string.alphanumeric(8).toUpperCase(),
+        sealNo2:
+          Math.random() > 0.8
+            ? faker.string.alphanumeric(8).toUpperCase()
+            : null,
+        documentsTransferred: true,
+        shipperSignature: faker.string.alphanumeric(64),
+      };
+
+    case GatepassStatus.COMPLETED:
+      return {
+        ...baseData,
+        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
+        yardCheckinTime: faker.date.recent({ days: 1 }),
+        pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
+        sealed: true,
+        sealNo1: faker.string.alphanumeric(8).toUpperCase(),
+        sealNo2:
+          Math.random() > 0.8
+            ? faker.string.alphanumeric(8).toUpperCase()
+            : null,
+        documentsTransferred: true,
+        shipperSignature: faker.string.alphanumeric(64),
+        receiverSignature: faker.string.alphanumeric(64),
+        releaseRemarks: faker.lorem.sentence(),
+        releaseTrailerNo: `RTR${faker.number.int({ min: 100, max: 999 })}`,
+        releaseSealNo: faker.string.alphanumeric(8).toUpperCase(),
+        vestReturned: true,
+      };
+
+    case GatepassStatus.EXITED:
+      const exitDate = faker.date.recent({ days: 1 });
+      return {
+        ...baseData,
+        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
+        yardCheckinTime: faker.date.recent({ days: 1 }),
+        pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
+        sealed: true,
+        sealNo1: faker.string.alphanumeric(8).toUpperCase(),
+        sealNo2:
+          Math.random() > 0.8
+            ? faker.string.alphanumeric(8).toUpperCase()
+            : null,
+        documentsTransferred: true,
+        shipperSignature: faker.string.alphanumeric(64),
+        receiverSignature: faker.string.alphanumeric(64),
+        securitySignature: faker.string.alphanumeric(64),
+        releaseRemarks: faker.lorem.sentence(),
+        releaseTrailerNo: `RTR${faker.number.int({ min: 100, max: 999 })}`,
+        releaseSealNo: faker.string.alphanumeric(8).toUpperCase(),
+        vestReturned: true,
+        dateOut: exitDate,
+        timeOut: exitDate,
+      };
+
+    case GatepassStatus.CANCELLED:
+      return {
+        ...baseData,
+        remarks: "Cancelled: " + faker.lorem.sentence(),
+      };
+
+    default:
+      return baseData;
+  }
 };
 
+// added idempotency
 const generateUser = async (role: Role, index: number) => {
   const defaultPassword = (argv as any)["default-password"];
   const saltRounds = (argv as any)["salt-rounds"];
   const hashedPassword = await hash(defaultPassword, saltRounds);
 
-  return prisma.user.create({
-    data: {
+  // Upsert user with given role and index, update password if it differs
+  return prisma.user.upsert({
+    where: {
+      email: `${role.toLowerCase()}${index}@example.com`,
+    },
+    update: {
+      password: hashedPassword, // update password in case it's different
+    },
+    create: {
       email: `${role.toLowerCase()}${index}@example.com`,
       name: faker.person.fullName(),
       role,
@@ -148,18 +235,27 @@ async function main() {
   const gatepassCount = (argv as any)["gatepass-count"];
   const userCount = (argv as any)["user-count"];
   const defaultPassword = (argv as any)["default-password"];
+  const clearDb = (argv as any)["clear"];
 
   console.log(`
 Seeding database with:
 - ${userCount} additional users per role
-- ${gatepassCount} gatepasses
+- ${gatepassCount} gatepasses per status (${
+    gatepassCount * Object.keys(GatepassStatus).length
+  } total)
 - Default password: ${defaultPassword}
 - Salt rounds: ${(argv as any)["salt-rounds"]}
+- Clear database: ${clearDb}
 `);
 
-  // Clean up existing data
-  await prisma.gatepass.deleteMany();
-  await prisma.user.deleteMany();
+  // Conditional cleanup based on --clear flag
+  if (clearDb) {
+    console.log("Clearing existing data...");
+    await prisma.gatepass.deleteMany();
+    await prisma.user.deleteMany();
+  } else {
+    console.log("Seeding without clearing existing data...");
+  }
 
   // Create default users
   const defaultUsers = await Promise.all([
@@ -187,13 +283,17 @@ Seeding database with:
 
   const allUsers = [...defaultUsers, ...additionalUsers];
 
-  // Create gatepasses
+  // Create gatepasses for each status
   const gatepasses = await Promise.all(
-    Array(gatepassCount)
-      .fill(0)
-      .map(() =>
-        prisma.gatepass.create({ data: generateRandomGatepass(allUsers) })
-      )
+    Object.values(GatepassStatus).flatMap((status) =>
+      Array(gatepassCount)
+        .fill(0)
+        .map(() =>
+          prisma.gatepass.create({
+            data: generateGatepassForStatus(allUsers, status),
+          })
+        )
+    )
   );
 
   console.log(
