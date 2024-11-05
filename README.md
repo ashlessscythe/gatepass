@@ -47,11 +47,19 @@ A modern web application for digitizing truck gate management processes. Replace
 
 ### Warehouse Interface
 
-- Document transfer management
-- Seal assignment and tracking
-- Digital signature capture for drivers
+- Document Management:
+  - Status-based document filtering
+  - Document transfer tracking
+  - Driver signature capture
+  - Automatic status transitions
+- Seal Management:
+  - Status-based seal assignment
+  - Dedicated seal tracking interface
+  - Automatic status updates
+  - Real-time validation
 - Pending documents overview
 - Real-time status updates
+- Automatic data refresh
 
 ### Admin Interface
 
@@ -63,6 +71,20 @@ A modern web application for digitizing truck gate management processes. Replace
   - Configure system-wide preferences
   - Manage default settings
   - Control system behavior
+
+### Status Management
+
+- Sequential Status Flow:
+  - PENDING → BOL_VERIFIED → CHECKED_IN → IN_YARD → AT_DOOR → LOADING
+  - AWAITING_SEAL → AWAITING_DOCS → DOCS_TRANSFERRED → COMPLETED → EXITED
+- Automatic Status Transitions:
+  - Status updates based on actions
+  - Validation of required conditions
+  - Prevention of invalid transitions
+- Status-Based Access Control:
+  - Role-specific status management
+  - Status-based interface updates
+  - Real-time status tracking
 
 ## Tech Stack
 

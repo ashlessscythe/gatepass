@@ -70,6 +70,9 @@ GATEPASS WEB APP TODO LIST
         [x] Create document handling flow
         [x] Implement seal management
         [x] Add driver signature capture
+        [x] Add status-based document filtering
+        [x] Add status-based seal management
+        [x] Implement automatic status transitions
     [x] Add Admin interface
         [x] User management
         [x] System settings

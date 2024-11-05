@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { PendingDocument, SealAssignmentData } from "@/types/gatepass";
+import { GatepassStatus } from "@prisma/client";
 
 export default function SealManagement() {
   const [gatepasses, setGatepasses] = useState<PendingDocument[]>([]);
@@ -16,7 +17,7 @@ export default function SealManagement() {
   // Memoized fetchGatepasses to avoid unnecessary re-creations
   const fetchGatepasses = useCallback(async () => {
     try {
-      const response = await fetch("/api/warehouse/pending-documents");
+      const response = await fetch("/api/warehouse/pending-seals");
       if (!response.ok) throw new Error("Failed to fetch gatepasses");
       const data = await response.json();
       setGatepasses(data);
@@ -72,6 +73,21 @@ export default function SealManagement() {
     }
   }, [selectedGatepass, sealNumber, toast, fetchGatepasses]);
 
+  const getStatusBadgeColor = (status: GatepassStatus) => {
+    switch (status) {
+      case GatepassStatus.AWAITING_SEAL:
+        return "bg-yellow-100 text-yellow-800";
+      case GatepassStatus.LOADING:
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const formatStatus = (status: GatepassStatus) => {
+    return status.toLowerCase().replace(/_/g, " ");
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -112,6 +128,20 @@ export default function SealManagement() {
                       <p className="text-sm text-muted-foreground">
                         {gatepass.carrier} - {gatepass.operatorName}
                       </p>
+                      <div className="flex gap-2 mt-1">
+                        <span
+                          className={`text-xs px-2 py-1 rounded ${getStatusBadgeColor(
+                            gatepass.status
+                          )}`}
+                        >
+                          {formatStatus(gatepass.status)}
+                        </span>
+                        {gatepass.documentsTransferred && (
+                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            Docs Transferred
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {new Date(gatepass.createdAt).toLocaleDateString()}
