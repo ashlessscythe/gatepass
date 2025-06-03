@@ -1,6 +1,26 @@
 # Gatepass Web Application
 
+![Gatepass Logo](public/branding/app_name.png)
+
 A modern web application for digitizing truck gate management processes. Replaces paper-based systems with a streamlined digital workflow for managing truck entry, dispatch verification, and exit procedures.
+
+## Screenshots
+
+### Main Dashboard
+![Dashboard View](public/branding/dashboard.png)
+The main dashboard provides a quick overview of recent gatepasses and their current statuses, enabling efficient monitoring of truck movements.
+
+### New Gatepass Creation
+![New Gatepass Form](public/branding/new_gatepass.png)
+Intuitive form interface for creating new gatepasses with real-time validation and preview.
+
+### Mobile Guard Interface
+![Mobile View](public/branding/mobile_view.png)
+Optimized mobile interface for guards working at truck gates, enabling efficient processing of trucks from any location.
+
+### Warehouse Management
+![Warehouse Interface](public/branding/warehouse_view.png)
+Dedicated warehouse interface showing document handling queues and seal management lists for streamlined operations.
 
 ## Getting Started
 
