@@ -39,18 +39,90 @@ export function GatepassTable({ initialData }: GatepassTableProps) {
   const handleSearch = (value: string) => {
     setSearch(value);
     setPage(1);
-    fetchData();
+
+    // Use the new value directly instead of relying on state update
+    const fetchWithNewSearch = async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams({
+          page: "1", // Always use page 1 when changing search
+          limit: "10",
+          ...(value && { search: value }),
+          ...(status !== "ALL" && { status }),
+        });
+
+        const response = await fetch(`/api/gatepass/list?${params}`);
+        if (!response.ok) throw new Error("Failed to fetch");
+
+        const newData = await response.json();
+        setData(newData);
+      } catch (error) {
+        console.error("Error fetching gatepasses:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWithNewSearch();
   };
 
   const handleStatusChange = (value: GatepassStatus | "ALL") => {
     setStatus(value);
     setPage(1);
-    fetchData();
+
+    // Use the new value directly instead of relying on state update
+    const fetchWithNewStatus = async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams({
+          page: "1", // Always use page 1 when changing status
+          limit: "10",
+          ...(search && { search }),
+          ...(value !== "ALL" && { status: value }),
+        });
+
+        const response = await fetch(`/api/gatepass/list?${params}`);
+        if (!response.ok) throw new Error("Failed to fetch");
+
+        const newData = await response.json();
+        setData(newData);
+      } catch (error) {
+        console.error("Error fetching gatepasses:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWithNewStatus();
   };
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    fetchData();
+
+    // Use the new value directly instead of relying on state update
+    const fetchWithNewPage = async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams({
+          page: newPage.toString(),
+          limit: "10",
+          ...(search && { search }),
+          ...(status !== "ALL" && { status }),
+        });
+
+        const response = await fetch(`/api/gatepass/list?${params}`);
+        if (!response.ok) throw new Error("Failed to fetch");
+
+        const newData = await response.json();
+        setData(newData);
+      } catch (error) {
+        console.error("Error fetching gatepasses:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWithNewPage();
   };
 
   const getStatusColor = (status: GatepassStatus) => {

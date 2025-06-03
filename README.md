@@ -2,6 +2,27 @@
 
 A modern web application for digitizing truck gate management processes. Replaces paper-based systems with a streamlined digital workflow for managing truck entry, dispatch verification, and exit procedures.
 
+## Getting Started
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables:
+   - Copy `.env.example` to `.env` and update with your values:
+   ```bash
+   cp .env.example .env
+   ```
+   - Update the values in `.env` with your actual configuration:
+   ```env
+   DATABASE_URL=your_postgres_url
+   NEXTAUTH_SECRET=your_secret
+   NEXTAUTH_URL=http://localhost:3000
+   SEED_DEFAULT_PASSWORD=your_secure_password  # Optional: For database seeding
+   ```
+   Note: The `.env` file is excluded from git to protect sensitive information.
+
 ## Features
 
 ### Core Features
@@ -104,19 +125,3 @@ A modern web application for digitizing truck gate management processes. Replace
   - Event-based drawing detection
 - **Mobile Support:** Responsive design with mobile-first approach
 - **State Management:** React hooks with optimized re-renders
-
-## Getting Started
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Set up environment variables:
-   ```env
-   DATABASE_URL=your_postgres_url
-   NEXTAUTH_SECRET=your_secret
-   NEXTAUTH_URL=http://localhost:3000
-   SEED_DEFAULT_PASSWORD=your_secure_password  # Optional: For database seeding
-   ```
-   [Rest of README remains unchanged...]
