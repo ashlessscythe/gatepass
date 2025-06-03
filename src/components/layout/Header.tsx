@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { MobileNav } from "./MobileNav";
 import { Navigation } from "./Navigation";
+import { config } from "@/lib/config";
 
 export function Header() {
   const { data: session } = useSession();
@@ -15,7 +16,7 @@ export function Header() {
         <div className="flex items-center gap-4">
           <MobileNav />
           <Link className="flex items-center space-x-2" href="/">
-            <span className="font-bold">Gatepass System</span>
+            <span className="font-bold">{config.publicAppName}</span>
           </Link>
         </div>
 

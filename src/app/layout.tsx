@@ -8,10 +8,11 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Toaster } from "@/components/ui/toaster";
 
 import "./globals.css";
+import { config } from "@/lib/config";
 
 export const metadata: Metadata = {
-  title: "Gatepass",
-  description: "Gatepass Management System",
+  title: config.publicAppName,
+  description: `${config.publicAppName} - Management System`,
 };
 
 export default function RootLayout({

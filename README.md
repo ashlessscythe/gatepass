@@ -19,6 +19,7 @@ A modern web application for digitizing truck gate management processes. Replace
    DATABASE_URL=your_postgres_url
    NEXTAUTH_SECRET=your_secret
    NEXTAUTH_URL=http://localhost:3000
+   NEXT_PUBLIC_APP_NAME="Gatepass System"  # Optional: Custom application name
    SEED_DEFAULT_PASSWORD=your_secure_password  # Optional: For database seeding
    ```
    Note: The `.env` file is excluded from git to protect sensitive information.
