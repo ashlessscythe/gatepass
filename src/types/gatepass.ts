@@ -49,6 +49,7 @@ export interface PendingDocument {
   createdAt: string;
   sealed: boolean;
   documentsTransferred: boolean;
+  shipperSignature?: string | null;
 }
 
 export interface SealAssignmentData {

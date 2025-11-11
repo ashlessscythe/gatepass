@@ -2,16 +2,19 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { PendingDocument, SealAssignmentData } from "@/types/gatepass";
 import { GatepassStatus } from "@prisma/client";
+import { Search } from "lucide-react";
 
 export default function SealManagement() {
   const [gatepasses, setGatepasses] = useState<PendingDocument[]>([]);
   const [selectedGatepass, setSelectedGatepass] = useState<string | null>(null);
   const [sealNumber, setSealNumber] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const formRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Memoized fetchGatepasses to avoid unnecessary re-creations
@@ -88,6 +91,29 @@ export default function SealManagement() {
     return status.toLowerCase().replace(/_/g, " ");
   };
 
+  // Filter gatepasses based on search query
+  const filteredGatepasses = useMemo(() => {
+    if (!searchQuery.trim()) return gatepasses;
+    const query = searchQuery.toLowerCase();
+    return gatepasses.filter(
+      (gp) =>
+        gp.formNumber?.toLowerCase().includes(query) ||
+        gp.carrier?.toLowerCase().includes(query) ||
+        gp.operatorName?.toLowerCase().includes(query)
+    );
+  }, [gatepasses, searchQuery]);
+
+  // Scroll to form when gatepass is selected
+  useEffect(() => {
+    if (selectedGatepass && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [selectedGatepass]);
+
+  const handleGatepassSelect = (id: string) => {
+    setSelectedGatepass(id);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -102,48 +128,67 @@ export default function SealManagement() {
         </Button>
       </div>
 
-      <div className="space-y-4">
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground mb-2">
-            Select a gatepass to assign seals
-          </p>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Left side: Gatepass list */}
+        <Card className="p-4 flex flex-col">
+          <div className="mb-3">
+            <p className="text-sm text-muted-foreground mb-2">
+              Select a gatepass to assign seals ({filteredGatepasses.length}{" "}
+              {filteredGatepasses.length === 1 ? "item" : "items"})
+            </p>
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by form #, carrier, or operator..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          </div>
 
-          {gatepasses.length === 0 ? (
-            <div className="text-sm text-muted-foreground">
-              No pending seal assignments
+          {filteredGatepasses.length === 0 ? (
+            <div className="text-sm text-muted-foreground text-center py-8">
+              {searchQuery
+                ? "No gatepasses match your search"
+                : "No pending seal assignments"}
             </div>
           ) : (
-            <div className="space-y-2">
-              {gatepasses.map((gatepass) => (
+            <div className="space-y-1.5 overflow-y-auto max-h-[600px] pr-2 flex-1 min-h-0">
+              {filteredGatepasses.map((gatepass) => (
                 <Card
                   key={gatepass.id}
-                  className={`p-3 cursor-pointer hover:bg-accent ${
-                    selectedGatepass === gatepass.id ? "border-primary" : ""
+                  className={`p-2 cursor-pointer transition-all ${
+                    selectedGatepass === gatepass.id
+                      ? "border-primary border-2 bg-primary/5"
+                      : "hover:bg-accent border"
                   }`}
-                  onClick={() => setSelectedGatepass(gatepass.id)}
+                  onClick={() => handleGatepassSelect(gatepass.id)}
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium">Form #{gatepass.formNumber}</p>
-                      <p className="text-sm text-muted-foreground">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">
+                        Form #{gatepass.formNumber}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
                         {gatepass.carrier} - {gatepass.operatorName}
                       </p>
-                      <div className="flex gap-2 mt-1">
+                      <div className="flex gap-1.5 mt-1 flex-wrap">
                         <span
-                          className={`text-xs px-2 py-1 rounded ${getStatusBadgeColor(
+                          className={`text-xs px-1.5 py-0.5 rounded ${getStatusBadgeColor(
                             gatepass.status
                           )}`}
                         >
                           {formatStatus(gatepass.status)}
                         </span>
                         {gatepass.documentsTransferred && (
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                          <span className="text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded">
                             Docs Transferred
                           </span>
                         )}
                       </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(gatepass.createdAt).toLocaleDateString()}
                     </div>
                   </div>
@@ -153,27 +198,69 @@ export default function SealManagement() {
           )}
         </Card>
 
-        {selectedGatepass && (
-          <Card className="p-4">
-            <h4 className="font-medium mb-2">Assign Seal</h4>
-            <div className="space-y-2">
-              <Input
-                placeholder="Enter seal number"
-                value={sealNumber}
-                onChange={(e) => setSealNumber(e.target.value)}
-                disabled={loading}
-              />
-              <Button
-                className="w-full"
-                size="sm"
-                onClick={handleSealAssignment}
-                disabled={loading || !sealNumber.trim()}
-              >
-                {loading ? "Processing..." : "Assign Seal"}
-              </Button>
-            </div>
-          </Card>
-        )}
+        {/* Right side: Form */}
+        <div ref={formRef} className="lg:sticky lg:top-4 lg:self-start">
+          {selectedGatepass ? (
+            <Card className="p-4">
+              <h4 className="font-medium mb-3 text-base">Assign Seal</h4>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Selected Gatepass:
+                  </p>
+                  <p className="font-medium text-sm">
+                    Form #
+                    {
+                      gatepasses.find((gp) => gp.id === selectedGatepass)
+                        ?.formNumber
+                    }
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Enter seal number"
+                    value={sealNumber}
+                    onChange={(e) => setSealNumber(e.target.value)}
+                    disabled={loading}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && sealNumber.trim() && !loading) {
+                        handleSealAssignment();
+                      }
+                    }}
+                    autoFocus
+                    className="text-sm"
+                  />
+                  <Button
+                    className="w-full"
+                    size="sm"
+                    onClick={handleSealAssignment}
+                    disabled={loading || !sealNumber.trim()}
+                  >
+                    {loading ? "Processing..." : "Assign Seal"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedGatepass(null);
+                      setSealNumber("");
+                    }}
+                    disabled={loading}
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ) : (
+            <Card className="p-4 flex items-center justify-center min-h-[150px] border-dashed">
+              <p className="text-xs text-muted-foreground text-center">
+                Select a gatepass from the list to assign a seal
+              </p>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -39,15 +39,20 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if all requirements are met (seals assigned, signatures collected)
+    // Check if all requirements are met (seals assigned, shipper signature collected)
     const hasSeals = currentGatepass.sealed;
-    const hasSignatures = Boolean(
-      currentGatepass.shipperSignature && currentGatepass.receiverSignature
-    );
+    const hasShipperSignature = Boolean(currentGatepass.shipperSignature);
 
-    if (!hasSeals || !hasSignatures) {
+    if (!hasSeals) {
       return new NextResponse(
-        "Cannot complete: Seals must be assigned and signatures collected before transferring documents",
+        "Cannot complete: Seals must be assigned before transferring documents",
+        { status: 400 }
+      );
+    }
+
+    if (!hasShipperSignature) {
+      return new NextResponse(
+        "Cannot complete: Shipper signature is required before transferring documents",
         { status: 400 }
       );
     }

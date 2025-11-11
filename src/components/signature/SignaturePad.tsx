@@ -6,14 +6,18 @@ import { Button } from "@/components/ui/button";
 
 export interface SignaturePadProps {
   onChange: (dataUrl: string | null) => void;
+  onSave?: (dataUrl: string) => Promise<void> | void;
   defaultValue?: string | null;
   required?: boolean;
+  fullscreen?: boolean;
 }
 
 export function SignaturePad({
   onChange,
+  onSave,
   defaultValue,
   required = false,
+  fullscreen = false,
 }: SignaturePadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const signaturePadRef = useRef<SignaturePadBase | null>(null);
@@ -81,7 +85,7 @@ export function SignaturePad({
     }
   };
 
-  const save = useCallback(() => {
+  const save = useCallback(async () => {
     console.log("[SignaturePad] Save triggered - hasSignature:", hasSignature);
     if (signaturePadRef.current && canvasRef.current) {
       if (signaturePadRef.current.isEmpty()) {
@@ -101,6 +105,20 @@ export function SignaturePad({
         const compressedDataUrl = compressImage(canvasRef.current);
         console.log("[SignaturePad] Saving signature data...");
         onChange(compressedDataUrl);
+        
+        // Call onSave callback if provided (e.g., to save to database)
+        if (onSave) {
+          try {
+            await onSave(compressedDataUrl);
+            console.log("[SignaturePad] Signature saved via onSave callback");
+          } catch (error) {
+            console.error("[SignaturePad] Error in onSave callback:", error);
+            setError("Failed to save signature");
+            setIsSaved(false);
+            return;
+          }
+        }
+        
         setIsSaved(true);
         setHasSignature(true);
         console.log("[SignaturePad] Signature saved successfully");
@@ -110,7 +128,7 @@ export function SignaturePad({
         setIsSaved(false);
       }
     }
-  }, [onChange, required, hasSignature]);
+  }, [onChange, onSave, required, hasSignature]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -120,14 +138,15 @@ export function SignaturePad({
     }
 
     const parentWidth = canvas.parentElement?.offsetWidth || 300;
+    const canvasHeight = fullscreen ? Math.min(window.innerHeight * 0.6, 600) : 200;
     canvas.width = parentWidth;
-    canvas.height = 200;
+    canvas.height = canvasHeight;
 
     console.log(
       "[SignaturePad] Initializing with dimensions:",
       parentWidth,
       "x",
-      200
+      canvasHeight
     );
 
     signaturePadRef.current = new SignaturePadBase(canvas, {
@@ -197,7 +216,31 @@ export function SignaturePad({
       canvas.removeEventListener("pointermove", handleDrawing);
       observer.disconnect();
     };
-  }, [defaultValue, checkSignature, handleDrawing]);
+  }, [checkSignature, handleDrawing, fullscreen]);
+
+  // Separate effect to handle defaultValue changes without re-initializing
+  useEffect(() => {
+    if (!signaturePadRef.current) return;
+
+    if (defaultValue) {
+      try {
+        console.log("[SignaturePad] Updating with new default value");
+        signaturePadRef.current.clear();
+        signaturePadRef.current.fromDataURL(defaultValue);
+        setIsSaved(true);
+        setHasSignature(true);
+        // Only update parent if it's different from current state
+        // This prevents unnecessary re-renders
+      } catch (error) {
+        console.error("[SignaturePad] Error loading default signature:", error);
+      }
+    } else if (signaturePadRef.current && !signaturePadRef.current.isEmpty()) {
+      // Only clear if there's something drawn
+      signaturePadRef.current.clear();
+      setIsSaved(false);
+      setHasSignature(false);
+    }
+  }, [defaultValue]);
 
   const clear = () => {
     console.log("[SignaturePad] Clearing signature");

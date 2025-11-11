@@ -34,6 +34,7 @@ export async function GET() {
         createdAt: true,
         sealed: true,
         documentsTransferred: true,
+        shipperSignature: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -50,6 +51,7 @@ export async function GET() {
       createdAt: doc.createdAt.toISOString(),
       sealed: doc.sealed,
       documentsTransferred: doc.documentsTransferred,
+      shipperSignature: doc.shipperSignature,
     }));
 
     return NextResponse.json(pendingDocuments);

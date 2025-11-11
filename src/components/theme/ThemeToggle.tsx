@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "./ThemeProvider";
-import { Moon, Sun, Laptop, Palette, Zap, Clock } from "lucide-react";
+import { Moon, Sun, Laptop, Palette, Zap, Clock, Sparkles, Waves, Terminal, Sunset } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -40,6 +40,26 @@ const themes = [
     value: "cyberpunk",
     label: "Cyberpunk",
     Icon: Zap,
+  },
+  {
+    value: "neon",
+    label: "Neon",
+    Icon: Sparkles,
+  },
+  {
+    value: "ocean",
+    label: "Ocean",
+    Icon: Waves,
+  },
+  {
+    value: "matrix",
+    label: "Matrix",
+    Icon: Terminal,
+  },
+  {
+    value: "sunset",
+    label: "Sunset",
+    Icon: Sunset,
   },
 ] as const;
 

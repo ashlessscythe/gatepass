@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "light" | "dark" | "skeleton" | "modern" | "retro" | "cyberpunk";
+type Theme = "light" | "dark" | "skeleton" | "modern" | "retro" | "cyberpunk" | "neon" | "ocean" | "matrix" | "sunset";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -23,7 +23,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     const savedTheme = localStorage.getItem("theme") as Theme;
     if (savedTheme) {
       setTheme(savedTheme);
-      document.documentElement.classList.remove("light", "dark", "skeleton", "modern", "retro", "cyberpunk");
+      document.documentElement.classList.remove("light", "dark", "skeleton", "modern", "retro", "cyberpunk", "neon", "ocean", "matrix", "sunset");
       document.documentElement.classList.add(savedTheme);
     } else {
       // Check system preference for light/dark
@@ -36,7 +36,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   const handleThemeChange = (newTheme: Theme) => {
     setTheme(newTheme);
-    document.documentElement.classList.remove("light", "dark", "skeleton", "modern", "retro", "cyberpunk");
+    document.documentElement.classList.remove("light", "dark", "skeleton", "modern", "retro", "cyberpunk", "neon", "ocean", "matrix", "sunset");
     document.documentElement.classList.add(newTheme);
     localStorage.setItem("theme", newTheme);
   };
