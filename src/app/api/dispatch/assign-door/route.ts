@@ -32,13 +32,10 @@ export async function POST(request: Request) {
       return new NextResponse("Gatepass not found", { status: 404 });
     }
 
-    // Validate status
-    if (
-      currentGatepass.status !== GatepassStatus.BOL_VERIFIED &&
-      currentGatepass.status !== GatepassStatus.CHECKED_IN
-    ) {
+    // Validate status - must be BOL_VERIFIED (which means driver is checked in)
+    if (currentGatepass.status !== GatepassStatus.BOL_VERIFIED) {
       return new NextResponse(
-        "Invalid status: Truck must be checked in before assigning a door",
+        "Invalid status: BOL must be verified before assigning a door",
         { status: 400 }
       );
     }

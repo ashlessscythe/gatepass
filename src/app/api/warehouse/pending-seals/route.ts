@@ -17,15 +17,16 @@ export async function GET() {
 
   try {
     // Get gatepasses that need seal assignment
+    // Seals can be assigned during LOADING or AWAITING_DOCS
     const documents = await prisma.gatepass.findMany({
       where: {
-        OR: [
-          // Include gatepasses specifically awaiting seals
-          { status: GatepassStatus.AWAITING_SEAL },
-          // Also include those that are in loading but not sealed yet
+        AND: [
           {
-            AND: [{ status: GatepassStatus.LOADING }, { sealed: false }],
+            status: {
+              in: [GatepassStatus.LOADING, GatepassStatus.AWAITING_DOCS],
+            },
           },
+          { sealed: false },
         ],
       },
       select: {

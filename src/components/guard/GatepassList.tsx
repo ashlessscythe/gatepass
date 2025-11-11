@@ -92,7 +92,7 @@ export function GatepassList({ initialData }: GatepassListProps) {
               </button>
             )}
 
-            {gatepass.status === GatepassStatus.IN_YARD && (
+            {gatepass.status === GatepassStatus.COMPLETED && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();

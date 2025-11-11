@@ -32,17 +32,14 @@ export async function POST(request: Request) {
     }
 
     // Determine the new status based on current conditions
+    // Seals can be assigned during LOADING or AWAITING_DOCS
     let newStatus = currentGatepass.status;
-    if (currentGatepass.documentsTransferred) {
-      // If documents are already transferred, move to COMPLETED
-      newStatus = GatepassStatus.COMPLETED;
-    } else if (
-      currentGatepass.status === GatepassStatus.LOADING ||
-      currentGatepass.status === GatepassStatus.AWAITING_SEAL
-    ) {
-      // If in LOADING or AWAITING_SEAL, move to AWAITING_DOCS
+    if (currentGatepass.status === GatepassStatus.LOADING) {
+      // If still loading, move to AWAITING_DOCS when seal is assigned
       newStatus = GatepassStatus.AWAITING_DOCS;
     }
+    // If already in AWAITING_DOCS, stay there (seal is just being added)
+    // If documents are already transferred and sealed, should already be COMPLETED
 
     // Update gatepass with seal information
     const updatedGatepass = await prisma.gatepass.update({

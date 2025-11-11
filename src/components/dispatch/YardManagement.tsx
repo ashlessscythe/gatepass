@@ -37,9 +37,8 @@ export function YardManagement() {
   const { pendingGatepasses, handledGatepasses } = useMemo(() => {
     const pending = gatepasses.filter(
       (gatepass) =>
-        // Only show BOL_VERIFIED and CHECKED_IN in pending
-        (gatepass.status === GatepassStatus.BOL_VERIFIED ||
-          gatepass.status === GatepassStatus.CHECKED_IN) &&
+        // Only show BOL_VERIFIED in pending (driver checked in when BOL is verified)
+        gatepass.status === GatepassStatus.BOL_VERIFIED &&
         // And only if they don't have a door assigned
         !gatepass.pickupDoor
     );
@@ -51,9 +50,7 @@ export function YardManagement() {
         // Or are in a status after door assignment
         gatepass.status === GatepassStatus.AT_DOOR ||
         gatepass.status === GatepassStatus.LOADING ||
-        gatepass.status === GatepassStatus.AWAITING_SEAL ||
         gatepass.status === GatepassStatus.AWAITING_DOCS ||
-        gatepass.status === GatepassStatus.DOCS_TRANSFERRED ||
         gatepass.status === GatepassStatus.COMPLETED
     );
 
@@ -179,15 +176,12 @@ export function YardManagement() {
         return;
       }
 
-      // Validate status requirements
-      if (
-        gatepass.status !== GatepassStatus.BOL_VERIFIED &&
-        gatepass.status !== GatepassStatus.CHECKED_IN
-      ) {
+      // Validate status requirements - must be BOL_VERIFIED (which means driver is checked in)
+      if (gatepass.status !== GatepassStatus.BOL_VERIFIED) {
         toast({
           title: "Error",
           description:
-            "Truck must be checked in before assigning a door. Please verify BOL and check in the truck first.",
+            "BOL must be verified before assigning a door. Please verify BOL first.",
           variant: "destructive",
         });
         return;
@@ -241,10 +235,7 @@ export function YardManagement() {
   );
 
   const canAssignDoor = useCallback((status: GatepassStatus) => {
-    return (
-      status === GatepassStatus.BOL_VERIFIED ||
-      status === GatepassStatus.CHECKED_IN
-    );
+    return status === GatepassStatus.BOL_VERIFIED;
   }, []);
 
   const renderGatepassTable = (
@@ -332,17 +323,7 @@ export function YardManagement() {
               </Select>
             </TableCell>
             <TableCell>
-              {gatepass.status === GatepassStatus.BOL_VERIFIED && (
-                <Button
-                  onClick={() =>
-                    handleStatusChange(gatepass.id, GatepassStatus.CHECKED_IN)
-                  }
-                  size="sm"
-                  disabled={loading}
-                >
-                  Check In
-                </Button>
-              )}
+              {/* Check-in happens automatically when BOL is verified */}
             </TableCell>
           </TableRow>
         ))}

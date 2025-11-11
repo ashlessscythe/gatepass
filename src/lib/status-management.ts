@@ -1,28 +1,13 @@
 import { GatepassStatus } from "@prisma/client";
 
 // Define valid status transitions
+// Simplified workflow: PENDING → BOL_VERIFIED → AT_DOOR → LOADING → AWAITING_DOCS → COMPLETED → EXITED
 const validTransitions: Record<GatepassStatus, GatepassStatus[]> = {
   PENDING: [GatepassStatus.BOL_VERIFIED, GatepassStatus.CANCELLED],
-  BOL_VERIFIED: [GatepassStatus.CHECKED_IN, GatepassStatus.CANCELLED],
-  CHECKED_IN: [GatepassStatus.IN_YARD, GatepassStatus.CANCELLED],
-  IN_YARD: [GatepassStatus.AT_DOOR, GatepassStatus.CANCELLED],
+  BOL_VERIFIED: [GatepassStatus.AT_DOOR, GatepassStatus.CANCELLED],
   AT_DOOR: [GatepassStatus.LOADING, GatepassStatus.CANCELLED],
-  LOADING: [
-    GatepassStatus.AWAITING_SEAL,
-    GatepassStatus.AWAITING_DOCS,
-    GatepassStatus.CANCELLED,
-  ],
-  AWAITING_SEAL: [
-    GatepassStatus.DOCS_TRANSFERRED,
-    GatepassStatus.COMPLETED,
-    GatepassStatus.CANCELLED,
-  ],
-  AWAITING_DOCS: [
-    GatepassStatus.DOCS_TRANSFERRED,
-    GatepassStatus.COMPLETED,
-    GatepassStatus.CANCELLED,
-  ],
-  DOCS_TRANSFERRED: [GatepassStatus.COMPLETED, GatepassStatus.CANCELLED],
+  LOADING: [GatepassStatus.AWAITING_DOCS, GatepassStatus.CANCELLED],
+  AWAITING_DOCS: [GatepassStatus.COMPLETED, GatepassStatus.CANCELLED],
   COMPLETED: [GatepassStatus.EXITED, GatepassStatus.CANCELLED],
   EXITED: [GatepassStatus.CANCELLED],
   CANCELLED: [], // Terminal state
@@ -46,11 +31,10 @@ export function isValidTransition(
 export function getStatusFromAction(
   action:
     | "VERIFY_BOL"
-    | "CHECK_IN"
     | "ASSIGN_DOOR"
     | "START_LOADING"
-    | "ASSIGN_SEAL"
-    | "TRANSFER_DOCS",
+    | "COMPLETE_LOADING"
+    | "COMPLETE_DOCS",
   currentStatus: GatepassStatus
 ): GatepassStatus | null {
   switch (action) {
@@ -59,13 +43,8 @@ export function getStatusFromAction(
         ? GatepassStatus.BOL_VERIFIED
         : null;
 
-    case "CHECK_IN":
-      return currentStatus === GatepassStatus.BOL_VERIFIED
-        ? GatepassStatus.CHECKED_IN
-        : null;
-
     case "ASSIGN_DOOR":
-      return currentStatus === GatepassStatus.IN_YARD
+      return currentStatus === GatepassStatus.BOL_VERIFIED
         ? GatepassStatus.AT_DOOR
         : null;
 
@@ -74,14 +53,14 @@ export function getStatusFromAction(
         ? GatepassStatus.LOADING
         : null;
 
-    case "ASSIGN_SEAL":
+    case "COMPLETE_LOADING":
       return currentStatus === GatepassStatus.LOADING
         ? GatepassStatus.AWAITING_DOCS
         : null;
 
-    case "TRANSFER_DOCS":
+    case "COMPLETE_DOCS":
       return currentStatus === GatepassStatus.AWAITING_DOCS
-        ? GatepassStatus.DOCS_TRANSFERRED
+        ? GatepassStatus.COMPLETED
         : null;
 
     default:
@@ -118,8 +97,8 @@ export function statusRequiresConditions(
 ): boolean {
   // Special conditions for specific transitions
   if (newStatus === GatepassStatus.COMPLETED) {
-    // Check if all required conditions are met
-    if (currentStatus === GatepassStatus.DOCS_TRANSFERRED) {
+    // Check if all required conditions are met when moving from AWAITING_DOCS
+    if (currentStatus === GatepassStatus.AWAITING_DOCS) {
       return (
         conditions.hasSeals &&
         conditions.hasDocuments &&

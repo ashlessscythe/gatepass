@@ -105,7 +105,7 @@ export default function DocumentHandling() {
     switch (status) {
       case GatepassStatus.AWAITING_DOCS:
         return "bg-yellow-100 text-yellow-800";
-      case GatepassStatus.DOCS_TRANSFERRED:
+      case GatepassStatus.COMPLETED:
         return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";

@@ -52,24 +52,10 @@ const generateGatepassForStatus = (users: any[], status: GatepassStatus) => {
         bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
       };
 
-    case GatepassStatus.CHECKED_IN:
-      return {
-        ...baseData,
-        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
-      };
-
-    case GatepassStatus.IN_YARD:
-      return {
-        ...baseData,
-        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
-        yardCheckinTime: faker.date.recent({ days: 1 }),
-      };
-
     case GatepassStatus.AT_DOOR:
       return {
         ...baseData,
         bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
-        yardCheckinTime: faker.date.recent({ days: 1 }),
         pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
       };
 
@@ -77,15 +63,6 @@ const generateGatepassForStatus = (users: any[], status: GatepassStatus) => {
       return {
         ...baseData,
         bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
-        yardCheckinTime: faker.date.recent({ days: 1 }),
-        pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
-      };
-
-    case GatepassStatus.AWAITING_SEAL:
-      return {
-        ...baseData,
-        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
-        yardCheckinTime: faker.date.recent({ days: 1 }),
         pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
       };
 
@@ -93,7 +70,6 @@ const generateGatepassForStatus = (users: any[], status: GatepassStatus) => {
       return {
         ...baseData,
         bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
-        yardCheckinTime: faker.date.recent({ days: 1 }),
         pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
         sealed: true,
         sealNo1: faker.string.alphanumeric(8).toUpperCase(),
@@ -101,29 +77,12 @@ const generateGatepassForStatus = (users: any[], status: GatepassStatus) => {
           Math.random() > 0.8
             ? faker.string.alphanumeric(8).toUpperCase()
             : null,
-      };
-
-    case GatepassStatus.DOCS_TRANSFERRED:
-      return {
-        ...baseData,
-        bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
-        yardCheckinTime: faker.date.recent({ days: 1 }),
-        pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
-        sealed: true,
-        sealNo1: faker.string.alphanumeric(8).toUpperCase(),
-        sealNo2:
-          Math.random() > 0.8
-            ? faker.string.alphanumeric(8).toUpperCase()
-            : null,
-        documentsTransferred: true,
-        shipperSignature: faker.string.alphanumeric(64),
       };
 
     case GatepassStatus.COMPLETED:
       return {
         ...baseData,
         bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
-        yardCheckinTime: faker.date.recent({ days: 1 }),
         pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
         sealed: true,
         sealNo1: faker.string.alphanumeric(8).toUpperCase(),
@@ -145,7 +104,6 @@ const generateGatepassForStatus = (users: any[], status: GatepassStatus) => {
       return {
         ...baseData,
         bolNumber: `BOL${faker.number.int({ min: 10000, max: 99999 })}`,
-        yardCheckinTime: faker.date.recent({ days: 1 }),
         pickupDoor: faker.number.int({ min: 1, max: 50 }).toString(),
         sealed: true,
         sealNo1: faker.string.alphanumeric(8).toUpperCase(),
@@ -335,6 +293,8 @@ Seeding database with:
   console.log(`  - dispatch0@example.com (DISPATCH)`);
   console.log(`  - warehouse0@example.com (WAREHOUSE)`);
   console.log(`\nAll users have password: ${defaultPassword}`);
+  console.log(`\nGatepasses created for all statuses including EXITED (closed out)`);
+  console.log(`  - Use the status filter in the gatepass list to view EXITED gatepasses`);
 }
 
 main()

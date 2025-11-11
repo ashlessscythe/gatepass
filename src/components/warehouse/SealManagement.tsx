@@ -75,10 +75,10 @@ export default function SealManagement() {
 
   const getStatusBadgeColor = (status: GatepassStatus) => {
     switch (status) {
-      case GatepassStatus.AWAITING_SEAL:
-        return "bg-yellow-100 text-yellow-800";
       case GatepassStatus.LOADING:
         return "bg-blue-100 text-blue-800";
+      case GatepassStatus.AWAITING_DOCS:
+        return "bg-yellow-100 text-yellow-800";
       default:
         return "bg-gray-100 text-gray-800";
     }

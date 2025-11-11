@@ -31,27 +31,36 @@ export async function POST(req: Request) {
       return new NextResponse("Gatepass not found", { status: 404 });
     }
 
-    // Update gatepass status and mark documents as transferred
+    // Validate that we're in AWAITING_DOCS status
+    if (currentGatepass.status !== GatepassStatus.AWAITING_DOCS) {
+      return new NextResponse(
+        "Invalid status: Documents can only be transferred when status is AWAITING_DOCS",
+        { status: 400 }
+      );
+    }
+
+    // Check if all requirements are met (seals assigned, signatures collected)
+    const hasSeals = currentGatepass.sealed;
+    const hasSignatures = Boolean(
+      currentGatepass.shipperSignature && currentGatepass.receiverSignature
+    );
+
+    if (!hasSeals || !hasSignatures) {
+      return new NextResponse(
+        "Cannot complete: Seals must be assigned and signatures collected before transferring documents",
+        { status: 400 }
+      );
+    }
+
+    // Update gatepass: mark documents as transferred and move to COMPLETED
     const updatedGatepass = await prisma.gatepass.update({
       where: { id: gatepassId },
       data: {
         documentsTransferred: true,
-        status: GatepassStatus.DOCS_TRANSFERRED,
+        status: GatepassStatus.COMPLETED,
         updatedById: session.user.id,
       },
     });
-
-    // Check if both documents are transferred and seals are applied
-    if (updatedGatepass.documentsTransferred && updatedGatepass.sealed) {
-      // Update to COMPLETED status if all requirements are met
-      await prisma.gatepass.update({
-        where: { id: gatepassId },
-        data: {
-          status: GatepassStatus.COMPLETED,
-          updatedById: session.user.id,
-        },
-      });
-    }
 
     return NextResponse.json(updatedGatepass);
   } catch (error) {

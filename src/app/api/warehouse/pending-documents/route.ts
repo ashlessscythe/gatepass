@@ -17,27 +17,12 @@ export async function GET() {
 
   try {
     // Get gatepasses that need document handling
+    // Documents are transferred when status is AWAITING_DOCS
     const documents = await prisma.gatepass.findMany({
       where: {
-        OR: [
-          // Include gatepasses specifically awaiting documents
+        AND: [
           { status: GatepassStatus.AWAITING_DOCS },
-          // Also include those that are in earlier stages but might need documents
-          {
-            AND: [
-              {
-                status: {
-                  in: [
-                    GatepassStatus.BOL_VERIFIED,
-                    GatepassStatus.IN_YARD,
-                    GatepassStatus.AT_DOOR,
-                    GatepassStatus.LOADING,
-                  ],
-                },
-              },
-              { documentsTransferred: false },
-            ],
-          },
+          { documentsTransferred: false },
         ],
       },
       select: {
