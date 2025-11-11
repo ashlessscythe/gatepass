@@ -6,7 +6,11 @@ import { hideBin } from "yargs/helpers";
 
 const prisma = new PrismaClient();
 
-const generateGatepassForStatus = (users: any[], status: GatepassStatus) => {
+const generateGatepassForStatus = (
+  users: any[],
+  status: GatepassStatus,
+  formNumberGenerator: () => string
+) => {
   const createdBy = users[Math.floor(Math.random() * users.length)];
   const updatedBy = users[Math.floor(Math.random() * users.length)];
   const purpose = faker.helpers.arrayElement(Object.values(Purpose));
@@ -14,7 +18,7 @@ const generateGatepassForStatus = (users: any[], status: GatepassStatus) => {
 
   // Base gatepass data
   const baseData = {
-    formNumber: `GP${faker.number.int({ min: 1000, max: 9999 })}`,
+    formNumber: formNumberGenerator(),
     dateIn,
     timeIn: dateIn,
     carrier: faker.company.name(),
@@ -215,12 +219,61 @@ async function main() {
     );
   }
 
+  // Calculate varied gatepass counts per status
+  // Some statuses are more common in real scenarios
+  const statusCounts: Record<GatepassStatus, number> = {} as Record<
+    GatepassStatus,
+    number
+  >;
+  let totalGatepasses = 0;
+
+  for (const status of Object.values(GatepassStatus)) {
+    // Base variation: ±30% of the target count
+    const variation = 0.3;
+    const minCount = Math.max(1, Math.floor(gatepassCount * (1 - variation)));
+    const maxCount = Math.ceil(gatepassCount * (1 + variation));
+
+    // Apply status-specific multipliers for more realistic distribution
+    let multiplier = 1.0;
+    switch (status) {
+      case GatepassStatus.PENDING:
+        // PENDING is common - slightly above average
+        multiplier = 1.1;
+        break;
+      case GatepassStatus.EXITED:
+        // EXITED might be less common (some get cancelled)
+        multiplier = 0.9;
+        break;
+      case GatepassStatus.CANCELLED:
+        // CANCELLED is rare
+        multiplier = 0.3;
+        break;
+      case GatepassStatus.COMPLETED:
+      case GatepassStatus.AWAITING_DOCS:
+        // These are common intermediate states
+        multiplier = 1.0;
+        break;
+      default:
+        multiplier = 1.0;
+    }
+
+    const adjustedCount = Math.floor(gatepassCount * multiplier);
+    const count = faker.number.int({
+      min: Math.max(1, Math.floor(adjustedCount * (1 - variation))),
+      max: Math.ceil(adjustedCount * (1 + variation)),
+    });
+
+    statusCounts[status] = count;
+    totalGatepasses += count;
+  }
+
   console.log(`
 Seeding database with:
 - ${userCount} additional users per role
-- ${gatepassCount} gatepasses per status (${
-    gatepassCount * Object.keys(GatepassStatus).length
-  } total)
+- Varied gatepasses per status (${totalGatepasses} total):
+${Object.entries(statusCounts)
+  .map(([status, count]) => `  - ${status}: ${count}`)
+  .join("\n")}
 - Default password: ${defaultPassword}
 - Salt rounds: ${saltRounds}
 - Clear database: ${clearDb}
@@ -271,30 +324,72 @@ Seeding database with:
 
   const allUsers = [...defaultUsers, ...additionalUsers];
 
-  // Create gatepasses for each status
-  const gatepasses = await Promise.all(
-    Object.values(GatepassStatus).flatMap((status) =>
-      Array(gatepassCount)
-        .fill(0)
-        .map(() =>
-          prisma.gatepass.create({
-            data: generateGatepassForStatus(allUsers, status),
-          })
-        )
-    )
+  // Create a unique formNumber generator using a counter
+  // This ensures no collisions even when generating many gatepasses
+  let formNumberCounter = 10000; // Start from 10000 to ensure 5-digit numbers
+  const generateUniqueFormNumber = (): string => {
+    const formNumber = `GP${formNumberCounter++}`;
+    return formNumber;
+  };
+
+  // Helper function to process items in batches to avoid connection pool exhaustion
+  const processInBatches = async <T, R>(
+    items: T[],
+    batchSize: number,
+    processor: (item: T) => Promise<R>
+  ): Promise<R[]> => {
+    const results: R[] = [];
+    for (let i = 0; i < items.length; i += batchSize) {
+      const batch = items.slice(i, i + batchSize);
+      const batchResults = await Promise.all(batch.map(processor));
+      results.push(...batchResults);
+    }
+    return results;
+  };
+
+  // Create gatepass data for each status (without executing creates yet)
+  const batchSize = 20; // Process 20 gatepasses at a time
+  const allGatepassData: Array<{ data: any }> = [];
+
+  for (const status of Object.values(GatepassStatus)) {
+    const countForStatus = statusCounts[status];
+    for (let i = 0; i < countForStatus; i++) {
+      allGatepassData.push({
+        data: generateGatepassForStatus(
+          allUsers,
+          status,
+          generateUniqueFormNumber
+        ),
+      });
+    }
+  }
+
+  // Process all gatepasses in batches to avoid connection pool exhaustion
+  const gatepasses = await processInBatches(
+    allGatepassData,
+    batchSize,
+    (gatepassData) => prisma.gatepass.create(gatepassData)
   );
 
   console.log(
     `\n✓ Created ${allUsers.length} users and ${gatepasses.length} gatepasses`
   );
+  console.log(`\nGatepass breakdown by status:`);
+  Object.entries(statusCounts).forEach(([status, count]) => {
+    console.log(`  - ${status}: ${count}`);
+  });
   console.log(`\nDefault users created:`);
   console.log(`  - admin0@example.com (ADMIN)`);
   console.log(`  - guard0@example.com (GUARD)`);
   console.log(`  - dispatch0@example.com (DISPATCH)`);
   console.log(`  - warehouse0@example.com (WAREHOUSE)`);
   console.log(`\nAll users have password: ${defaultPassword}`);
-  console.log(`\nGatepasses created for all statuses including EXITED (closed out)`);
-  console.log(`  - Use the status filter in the gatepass list to view EXITED gatepasses`);
+  console.log(
+    `\nGatepasses created for all statuses including EXITED (closed out)`
+  );
+  console.log(
+    `  - Use the status filter in the gatepass list to view EXITED gatepasses`
+  );
 }
 
 main()
