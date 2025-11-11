@@ -6,38 +6,6 @@ import { hideBin } from "yargs/helpers";
 
 const prisma = new PrismaClient();
 
-// Parse command line arguments
-const argv = yargs(hideBin(process.argv))
-  .option("gatepass-count", {
-    alias: "g",
-    type: "number",
-    description: "Number of gatepasses to generate per status",
-    default: 3,
-  })
-  .option("user-count", {
-    alias: "u",
-    type: "number",
-    description: "Number of additional users to generate per role",
-    default: 2,
-  })
-  .option("default-password", {
-    alias: "p",
-    type: "string",
-    description: "Default password for generated users",
-    default: process.env.SEED_DEFAULT_PASSWORD || "changeme123",
-  })
-  .option("salt-rounds", {
-    alias: "s",
-    type: "number",
-    description: "Number of salt rounds for password hashing",
-    default: 12,
-  })
-  .option("clear", {
-    type: "boolean",
-    description: "Clear existing data before seeding",
-    default: false,
-  }).argv;
-
 const generateGatepassForStatus = (users: any[], status: GatepassStatus) => {
   const createdBy = users[Math.floor(Math.random() * users.length)];
   const updatedBy = users[Math.floor(Math.random() * users.length)];
@@ -209,33 +177,85 @@ const generateGatepassForStatus = (users: any[], status: GatepassStatus) => {
 };
 
 // added idempotency
-const generateUser = async (role: Role, index: number) => {
-  const defaultPassword = (argv as any)["default-password"];
-  const saltRounds = (argv as any)["salt-rounds"];
+const generateUser = async (
+  role: Role,
+  index: number,
+  defaultPassword: string,
+  saltRounds: number
+) => {
+  if (!defaultPassword || defaultPassword.trim() === "") {
+    throw new Error("Default password cannot be empty");
+  }
+
   const hashedPassword = await hash(defaultPassword, saltRounds);
+  const email = `${role.toLowerCase()}${index}@example.com`;
 
   // Upsert user with given role and index, update password if it differs
-  return prisma.user.upsert({
+  const user = await prisma.user.upsert({
     where: {
-      email: `${role.toLowerCase()}${index}@example.com`,
+      email,
     },
     update: {
       password: hashedPassword, // update password in case it's different
     },
     create: {
-      email: `${role.toLowerCase()}${index}@example.com`,
+      email,
       name: faker.person.fullName(),
       role,
       password: hashedPassword,
     },
   });
+
+  console.log(`✓ ${role} user ${index}: ${email}`);
+  return user;
 };
 
 async function main() {
-  const gatepassCount = (argv as any)["gatepass-count"];
-  const userCount = (argv as any)["user-count"];
-  const defaultPassword = (argv as any)["default-password"];
-  const clearDb = (argv as any)["clear"];
+  // Parse command line arguments
+  const argv = await yargs(hideBin(process.argv))
+    .option("gatepass-count", {
+      alias: "g",
+      type: "number",
+      description: "Number of gatepasses to generate per status",
+      default: 3,
+    })
+    .option("user-count", {
+      alias: "u",
+      type: "number",
+      description: "Number of additional users to generate per role",
+      default: 2,
+    })
+    .option("default-password", {
+      alias: "p",
+      type: "string",
+      description: "Default password for generated users",
+      default: process.env.SEED_DEFAULT_PASSWORD || "bobspass",
+    })
+    .option("salt-rounds", {
+      alias: "s",
+      type: "number",
+      description: "Number of salt rounds for password hashing",
+      default: 12,
+    })
+    .option("clear", {
+      type: "boolean",
+      description: "Clear existing data before seeding",
+      default: false,
+    })
+    .parse();
+
+  const gatepassCount = argv["gatepass-count"] as number;
+  const userCount = argv["user-count"] as number;
+  const defaultPassword = argv["default-password"] as string;
+  const saltRounds = argv["salt-rounds"] as number;
+  const clearDb = argv["clear"] as boolean;
+
+  // Validate default password
+  if (!defaultPassword || defaultPassword.trim() === "") {
+    throw new Error(
+      "Default password cannot be empty. Set SEED_DEFAULT_PASSWORD env var or use --default-password flag."
+    );
+  }
 
   console.log(`
 Seeding database with:
@@ -244,7 +264,7 @@ Seeding database with:
     gatepassCount * Object.keys(GatepassStatus).length
   } total)
 - Default password: ${defaultPassword}
-- Salt rounds: ${(argv as any)["salt-rounds"]}
+- Salt rounds: ${saltRounds}
 - Clear database: ${clearDb}
 `);
 
@@ -257,28 +277,38 @@ Seeding database with:
     console.log("Seeding without clearing existing data...");
   }
 
+  console.log("\nCreating users...");
+
   // Create default users
   const defaultUsers = await Promise.all([
-    generateUser(Role.ADMIN, 0),
-    generateUser(Role.GUARD, 0),
-    generateUser(Role.DISPATCH, 0),
-    generateUser(Role.WAREHOUSE, 0),
+    generateUser(Role.ADMIN, 0, defaultPassword, saltRounds),
+    generateUser(Role.GUARD, 0, defaultPassword, saltRounds),
+    generateUser(Role.DISPATCH, 0, defaultPassword, saltRounds),
+    generateUser(Role.WAREHOUSE, 0, defaultPassword, saltRounds),
   ]);
 
   // Create additional users for each role
   const additionalUsers = await Promise.all([
     ...Array(userCount)
       .fill(0)
-      .map((_, i) => generateUser(Role.ADMIN, i + 1)),
+      .map((_, i) =>
+        generateUser(Role.ADMIN, i + 1, defaultPassword, saltRounds)
+      ),
     ...Array(userCount)
       .fill(0)
-      .map((_, i) => generateUser(Role.GUARD, i + 1)),
+      .map((_, i) =>
+        generateUser(Role.GUARD, i + 1, defaultPassword, saltRounds)
+      ),
     ...Array(userCount)
       .fill(0)
-      .map((_, i) => generateUser(Role.DISPATCH, i + 1)),
+      .map((_, i) =>
+        generateUser(Role.DISPATCH, i + 1, defaultPassword, saltRounds)
+      ),
     ...Array(userCount)
       .fill(0)
-      .map((_, i) => generateUser(Role.WAREHOUSE, i + 1)),
+      .map((_, i) =>
+        generateUser(Role.WAREHOUSE, i + 1, defaultPassword, saltRounds)
+      ),
   ]);
 
   const allUsers = [...defaultUsers, ...additionalUsers];
@@ -297,8 +327,14 @@ Seeding database with:
   );
 
   console.log(
-    `Created ${allUsers.length} users and ${gatepasses.length} gatepasses`
+    `\n✓ Created ${allUsers.length} users and ${gatepasses.length} gatepasses`
   );
+  console.log(`\nDefault users created:`);
+  console.log(`  - admin0@example.com (ADMIN)`);
+  console.log(`  - guard0@example.com (GUARD)`);
+  console.log(`  - dispatch0@example.com (DISPATCH)`);
+  console.log(`  - warehouse0@example.com (WAREHOUSE)`);
+  console.log(`\nAll users have password: ${defaultPassword}`);
 }
 
 main()
