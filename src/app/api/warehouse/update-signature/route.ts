@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
+import { signatureSchema } from "@/lib/schemas/gatepass";
 
 export async function POST(request: Request) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
 
-  if (!session) {
+  if (
+    !session ||
+    !["WAREHOUSE", "ADMIN"].includes(session.user.role)
+  ) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
@@ -13,8 +18,12 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { gatepassId, signature } = body;
 
-    if (!gatepassId || !signature) {
+    if (!gatepassId || typeof gatepassId !== "string" || !signature) {
       return new NextResponse("Missing required fields", { status: 400 });
+    }
+
+    if (!signatureSchema.safeParse(signature).success) {
+      return new NextResponse("Invalid signature", { status: 400 });
     }
 
     // Update gatepass with driver's signature
@@ -24,6 +33,7 @@ export async function POST(request: Request) {
       },
       data: {
         shipperSignature: signature, // Using shipper signature field for driver
+        updatedById: session.user.id,
       },
     });
 

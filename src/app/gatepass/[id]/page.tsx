@@ -7,9 +7,9 @@ import { authOptions } from "@/lib/auth";
 import type { Gatepass } from "@/types/gatepass";
 
 interface GatepassDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 async function getGatepass(id: string): Promise<Gatepass | null> {
@@ -40,7 +40,7 @@ export default async function GatepassDetailPage({
   params,
 }: GatepassDetailPageProps) {
   const session = await getServerSession(authOptions);
-  const gatepass = await getGatepass(params.id);
+  const gatepass = await getGatepass((await params).id);
 
   if (!gatepass) {
     notFound();

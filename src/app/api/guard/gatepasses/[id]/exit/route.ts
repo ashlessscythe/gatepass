@@ -5,8 +5,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== "GUARD") {
@@ -23,7 +24,7 @@ export async function POST(
     }
 
     const gatepass = await prisma.gatepass.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!gatepass) {
@@ -40,7 +41,7 @@ export async function POST(
 
     // Update gatepass with exit details
     const updatedGatepass = await prisma.gatepass.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         timeOut: new Date(),
         dateOut: new Date(),
