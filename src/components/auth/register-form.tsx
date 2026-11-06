@@ -64,10 +64,11 @@ export function RegisterForm() {
 
       toast({
         title: "Success",
-        description: "Account created successfully. Please sign in.",
+        description:
+          "Account created. An administrator must approve it before you can sign in.",
       });
 
-      router.push("/login");
+      router.push("/pending");
     } catch (error) {
       toast({
         title: "Error",

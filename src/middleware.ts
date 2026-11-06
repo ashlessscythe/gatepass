@@ -34,6 +34,14 @@ export default withAuth(
       );
     }
 
+    // Unapproved accounts get no access (they cannot normally hold a session)
+    if (token?.role === "PENDING") {
+      if (isApiRoute) {
+        return new NextResponse("Forbidden", { status: 403 });
+      }
+      return NextResponse.redirect(new URL("/pending", req.url));
+    }
+
     // Role-based API route protection
     if (isApiRoute) {
       const role = token?.role;

@@ -41,7 +41,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
-  role          Role      @default(GUARD)
+  role          Role      @default(PENDING)
   accounts      Account[]
   sessions      Session[]
   createdPasses Gatepass[] @relation("CreatedBy")
@@ -57,6 +57,7 @@ model VerificationToken {
 }
 
 enum Role {
+  PENDING   // Self-registered, awaiting admin approval; cannot sign in
   ADMIN
   GUARD
   DISPATCH

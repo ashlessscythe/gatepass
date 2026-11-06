@@ -45,7 +45,13 @@ function LoginFormContent() {
     setIsLoading(false);
 
     if (!signInResult?.ok) {
-      alert("Invalid credentials");
+      if (signInResult?.error === "PENDING_APPROVAL") {
+        window.location.href = "/pending";
+      } else if (signInResult?.error === "TOO_MANY_ATTEMPTS") {
+        alert("Too many attempts. Please try again later.");
+      } else {
+        alert("Invalid credentials");
+      }
       return;
     }
 
