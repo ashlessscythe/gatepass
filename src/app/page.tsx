@@ -15,13 +15,8 @@ export default function Home() {
           Streamline your facility access control and warehouse management with our comprehensive gatepass solution
         </p>
         <div className="flex gap-4 justify-center">
-          <Link href="/register">
-            <Button size="lg" className="text-lg px-8">
-              Sign Up
-            </Button>
-          </Link>
           <Link href="/login">
-            <Button size="lg" variant="outline" className="text-lg px-8">
+            <Button size="lg" className="text-lg px-8">
               Sign In
             </Button>
           </Link>
