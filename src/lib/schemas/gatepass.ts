@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { Purpose } from "@prisma/client";
 
+// PNG data URL, capped at ~1MB to avoid oversized DB writes
+export const signatureSchema = z
+  .string()
+  .max(1_000_000)
+  .regex(/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/);
+
 export const gatepassFormSchema = z.object({
   // Basic Information
   formNumber: z.string().optional().nullable(),
@@ -38,9 +44,9 @@ export const gatepassFormSchema = z.object({
   vestReturned: z.boolean(),
 
   // Signatures
-  receiverSignature: z.string().nullable(),
-  shipperSignature: z.string().nullable(),
-  securitySignature: z.string().nullable(),
+  receiverSignature: signatureSchema.nullable(),
+  shipperSignature: signatureSchema.nullable(),
+  securitySignature: signatureSchema.nullable(),
 });
 
 export type GatepassFormValues = z.infer<typeof gatepassFormSchema>;

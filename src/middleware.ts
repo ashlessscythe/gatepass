@@ -8,6 +8,11 @@ export default withAuth(
     const isAuthPage = req.nextUrl.pathname === "/login";
     const isApiRoute = req.nextUrl.pathname.startsWith("/api");
 
+    // NextAuth endpoints (login, session, csrf) must be reachable unauthenticated
+    if (req.nextUrl.pathname.startsWith("/api/auth/")) {
+      return NextResponse.next();
+    }
+
     // If the user is on the login page and is already authenticated,
     // redirect them to the dashboard
     if (isAuthPage && isAuth) {

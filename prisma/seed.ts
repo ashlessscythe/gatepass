@@ -191,7 +191,7 @@ async function main() {
       alias: "p",
       type: "string",
       description: "Default password for generated users",
-      default: process.env.SEED_DEFAULT_PASSWORD || "bobspass",
+      default: process.env.SEED_DEFAULT_PASSWORD,
     })
     .option("salt-rounds", {
       alias: "s",
@@ -274,7 +274,6 @@ Seeding database with:
 ${Object.entries(statusCounts)
   .map(([status, count]) => `  - ${status}: ${count}`)
   .join("\n")}
-- Default password: ${defaultPassword}
 - Salt rounds: ${saltRounds}
 - Clear database: ${clearDb}
 `);

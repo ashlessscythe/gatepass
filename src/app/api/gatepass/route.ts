@@ -16,13 +16,11 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    if (!["GUARD", "ADMIN"].includes(session.user.role)) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
     const json = await req.json();
-    console.log("[GATEPASS_POST] Received payload:", {
-      ...json,
-      receiverSignature: json.receiverSignature ? "has data" : "null",
-      shipperSignature: json.shipperSignature ? "has data" : "null",
-      securitySignature: json.securitySignature ? "has data" : "null",
-    });
 
     try {
       const body = gatepassFormSchema.parse(json);
@@ -51,29 +49,6 @@ export async function POST(req: Request) {
         } else {
           formNumber = generateGatepassNumber();
         }
-      }
-
-      // Log signature data sizes if present
-      if (body.receiverSignature) {
-        console.log(
-          "[GATEPASS_POST] Receiver signature size:",
-          Math.round(body.receiverSignature.length / 1024),
-          "KB"
-        );
-      }
-      if (body.shipperSignature) {
-        console.log(
-          "[GATEPASS_POST] Shipper signature size:",
-          Math.round(body.shipperSignature.length / 1024),
-          "KB"
-        );
-      }
-      if (body.securitySignature) {
-        console.log(
-          "[GATEPASS_POST] Security signature size:",
-          Math.round(body.securitySignature.length / 1024),
-          "KB"
-        );
       }
 
       const gatepass = await prisma.gatepass.create({

@@ -53,9 +53,6 @@ export async function POST(request: Request) {
     return NextResponse.json(updatedGatepass);
   } catch (error) {
     console.error("Error assigning door:", error);
-    return new NextResponse(
-      error instanceof Error ? error.message : "Internal Server Error",
-      { status: 500 }
-    );
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
