@@ -15,7 +15,7 @@ export default function RegisterPage() {
             Create an account
           </h1>
           <p className="text-sm text-muted-foreground">
-            Enter your details to create a new account
+            Enter your details to request an account. An administrator must approve it before you can sign in.
           </p>
         </div>
         <RegisterForm />

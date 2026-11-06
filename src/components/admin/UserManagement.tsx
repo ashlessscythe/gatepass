@@ -271,11 +271,24 @@ export function UserManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {[...users]
+                .sort(
+                  (a, b) =>
+                    Number(b.role === "PENDING") - Number(a.role === "PENDING")
+                )
+                .map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.role}</TableCell>
+                  <TableCell>
+                    {user.role === "PENDING" ? (
+                      <span className="font-semibold text-amber-600">
+                        PENDING APPROVAL
+                      </span>
+                    ) : (
+                      user.role
+                    )}
+                  </TableCell>
                   <TableCell>{user.createdPasses.length}</TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button
