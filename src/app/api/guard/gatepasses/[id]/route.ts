@@ -8,8 +8,9 @@ export const dynamic = "force-dynamic";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await getServerSession(authOptions);
 
@@ -26,13 +27,13 @@ export async function PATCH(
 
     console.log(
       "[GUARD_GATEPASS_UPDATE] Updating gatepass:",
-      params.id,
+      id,
       "Action:",
       action
     );
 
     const gatepass = await prisma.gatepass.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!gatepass) {
@@ -78,7 +79,7 @@ export async function PATCH(
     console.log("[GUARD_GATEPASS_UPDATE] New status:", newStatus);
 
     const updatedGatepass = await prisma.gatepass.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         status: newStatus,
         ...updateData,
