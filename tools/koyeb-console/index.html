@@ -1,0 +1,40 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Koyeb Console</title>
+<style>
+:root{color-scheme:light dark;--b:#ccc7;--ok:#1a7f37;--bad:#cf222e;--warn:#9a6700}
+body{font:14px system-ui;max-width:960px;margin:0 auto;padding:16px}
+h1{font-size:18px}table{width:100%;border-collapse:collapse}td,th{padding:6px 8px;border-bottom:1px solid var(--b);text-align:left}
+button{padding:4px 10px;border:1px solid var(--b);border-radius:6px;background:none;color:inherit;cursor:pointer}
+.tag{font-size:12px;padding:1px 6px;border-radius:9px;border:1px solid var(--b)}
+.HEALTHY,.RUNNING{color:var(--ok)}.ERROR,.UNHEALTHY,.STOPPED{color:var(--bad)}.PAUSED,.STARTING{color:var(--warn)}
+#msg{margin:8px 0;min-height:1.2em}
+</style>
+<h1>Koyeb Console <span class="tag" id="mode"></span></h1>
+<div><button id="r">Refresh</button> <span id="msg"></span></div>
+<h2>Services</h2><table id="svc"></table>
+<h2>Recent deployments</h2><table id="dep"></table>
+<script>
+const CSRF="__CSRF__", WRITE="__WRITE__"==="true";
+const $=id=>document.getElementById(id);
+$("mode").textContent=WRITE?"write enabled":"read-only";
+async function api(p,m="GET"){const r=await fetch("/api"+p,{method:m,headers:{"x-csrf":CSRF}});
+  const t=await r.text();let j;try{j=JSON.parse(t)}catch{j={}}if(!r.ok)throw new Error(j.message||j.error||r.status);return j}
+function cell(tr,v,cls){const td=document.createElement("td");td.textContent=v??"";if(cls)td.className=cls;tr.appendChild(td);return td}
+function fill(t,head,rows){t.replaceChildren();const h=t.insertRow();head.forEach(x=>{const th=document.createElement("th");th.textContent=x;h.appendChild(th)});rows(t)}
+async function act(id,name,a){
+  if(prompt(`Type the service name to confirm "${a}":\n${name}`)!==name){$("msg").textContent="Cancelled.";return}
+  try{await api(`/services/${id}/${a}`,"POST");$("msg").textContent=`${a} sent for ${name}`;setTimeout(load,1500)}catch(e){$("msg").textContent="Error: "+e.message}}
+async function load(){
+  $("msg").textContent="Loading…";
+  try{
+    const [s,d]=await Promise.all([api("/services?limit=100"),api("/deployments?limit=15")]);
+    const names={};(s.services||[]).forEach(x=>names[x.id]=x.name);
+    fill($("svc"),["Name","Status","Updated",""],t=>(s.services||[]).forEach(x=>{
+      const tr=t.insertRow();cell(tr,x.name);cell(tr,x.status,x.status);cell(tr,x.updated_at?.slice(0,19).replace("T"," "));
+      const td=cell(tr,"");if(WRITE)["redeploy","pause","resume"].forEach(a=>{const b=document.createElement("button");b.textContent=a;b.onclick=()=>act(x.id,x.name,a);td.append(b," ")})}));
+    fill($("dep"),["Service","Status","Created"],t=>(d.deployments||[]).forEach(x=>{
+      const tr=t.insertRow();cell(tr,names[x.service_id]||x.service_id);cell(tr,x.status,x.status);cell(tr,x.created_at?.slice(0,19).replace("T"," "))}));
+    $("msg").textContent="";
+  }catch(e){$("msg").textContent="Error: "+e.message}}
+$("r").onclick=load;load();
+</script>
