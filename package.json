@@ -8,7 +8,9 @@
     "start": "npx prisma migrate deploy && next start",
     "lint": "next lint",
     "prisma:deploy": "prisma generate && prisma migrate deploy",
-    "prisma:status": "prisma migrate status"
+    "prisma:status": "prisma migrate status",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
@@ -56,6 +58,7 @@
     "tailwindcss": "^3.3.0",
     "ts-node": "^10.9.1",
     "typescript": "^5",
+    "vitest": "^3.2.7",
     "yargs": "^17.7.2"
   }
 }
