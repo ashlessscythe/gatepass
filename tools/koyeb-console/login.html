@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Koyeb Console</title>
+<style>:root{color-scheme:light dark}body{font:16px system-ui;max-width:360px;margin:20vh auto;padding:16px}
+input,button{width:100%;box-sizing:border-box;padding:12px;font-size:16px;margin:6px 0}#m{color:#cf222e;min-height:1.2em}</style>
+<h1>Koyeb Console</h1>
+<form id="f"><input id="p" type="password" autocomplete="current-password" placeholder="Password" required autofocus><button>Sign in</button></form>
+<div id="m"></div>
+<script>
+document.getElementById("f").onsubmit=async e=>{e.preventDefault();
+  const r=await fetch("/login",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({password:document.getElementById("p").value})});
+  if(r.ok)location.reload();else document.getElementById("m").textContent=(await r.json().catch(()=>({}))).error||"error"};
+</script>

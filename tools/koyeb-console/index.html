@@ -2,18 +2,21 @@
 <title>Koyeb Console</title>
 <style>
 :root{color-scheme:light dark;--b:#ccc7;--ok:#1a7f37;--bad:#cf222e;--warn:#9a6700}
-body{font:14px system-ui;max-width:960px;margin:0 auto;padding:16px}
+body{font:16px system-ui;max-width:720px;margin:0 auto;padding:16px;-webkit-text-size-adjust:100%}
+table,tbody,tr{display:block}tr:has(th){display:none}tr{border:1px solid var(--b);border-radius:10px;padding:8px 12px;margin:8px 0}
+td{display:block;border:0;padding:2px 0}td:first-child{font-weight:600}
 h1{font-size:18px}table{width:100%;border-collapse:collapse}td,th{padding:6px 8px;border-bottom:1px solid var(--b);text-align:left}
-button{padding:4px 10px;border:1px solid var(--b);border-radius:6px;background:none;color:inherit;cursor:pointer}
+button{padding:10px 14px;min-height:44px;border:1px solid var(--b);border-radius:6px;background:none;color:inherit;cursor:pointer}
 .tag{font-size:12px;padding:1px 6px;border-radius:9px;border:1px solid var(--b)}
 .HEALTHY,.RUNNING{color:var(--ok)}.ERROR,.UNHEALTHY,.STOPPED{color:var(--bad)}.PAUSED,.STARTING{color:var(--warn)}
 #msg{margin:8px 0;min-height:1.2em}
 </style>
 <h1>Koyeb Console <span class="tag" id="mode"></span></h1>
-<div><button id="r">Refresh</button> <span id="msg"></span></div>
+<div><button id="r">Refresh</button> <button id="lo" hidden>Log out</button> <span id="msg"></span></div>
 <h2>Services</h2><table id="svc"></table>
 <h2>Recent deployments</h2><table id="dep"></table>
 <script>
+const REMOTE="__REMOTE__"==="true";if(REMOTE){$lo=document.getElementById("lo");$lo.hidden=false;$lo.onclick=async()=>{await fetch("/logout",{method:"POST"});location.reload()}}
 const CSRF="__CSRF__", WRITE="__WRITE__"==="true";
 const $=id=>document.getElementById(id);
 $("mode").textContent=WRITE?"write enabled":"read-only";
