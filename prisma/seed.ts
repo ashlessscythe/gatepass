@@ -257,7 +257,9 @@ async function main() {
         multiplier = 1.0;
     }
 
-    const adjustedCount = Math.floor(gatepassCount * multiplier);
+    // Clamp to >= 1 so small counts with fractional multipliers (e.g. 3 * 0.3)
+    // do not produce max < min below
+    const adjustedCount = Math.max(1, Math.floor(gatepassCount * multiplier));
     const count = faker.number.int({
       min: Math.max(1, Math.floor(adjustedCount * (1 - variation))),
       max: Math.ceil(adjustedCount * (1 + variation)),
